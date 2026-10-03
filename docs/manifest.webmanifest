@@ -1,0 +1,30 @@
+{
+  "name": "Ritim – Görev ve İlaç Takibi",
+  "short_name": "Ritim",
+  "description": "Her gün, her hafta ya da her ay tekrar eden görevler ve ilaç takibi.",
+  "lang": "tr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#EFF2EC",
+  "theme_color": "#2F55E4",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

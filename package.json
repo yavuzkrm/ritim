@@ -1,0 +1,16 @@
+{
+  "name": "ritim",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A mobile-first recurring task and medication tracker. Single HTML file, no backend, installable as a PWA.",
+  "license": "MIT",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "test": "node tests/e2e.js",
+    "icons": "node scripts/make-icons.js",
+    "screenshots": "node scripts/screenshots.js"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^23.11.1"
+  }
+}

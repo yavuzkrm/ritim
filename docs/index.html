@@ -1,0 +1,2110 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Her gün, her hafta ya da her ay tekrar eden görevler ve ilaç takibi.">
+<meta name="theme-color" content="#2F55E4">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ritim">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>Ritim</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Manrope:wght@500..800&display=swap">
+<style>
+/* Layout: one-column phone app — big header, pill-organizer week strip, progress ring card, time-of-day groups of large tappable rows, floating labelled tab bar. All sizes in rem so the "Yazı boyutu" setting scales everything. Built for older eyes: large type, strong contrast, words next to every icon. */
+:root{
+  --bg:#EFF2EC; --surface:#FFFFFF; --surface-2:#E4E8E0; --line:#D3D9CE;
+  --ink:#141A16; --muted:#4B5650; --faint:#78837C;
+  --acc-l:#2F55E4; --acc-d:#8FA8FF; --accent:var(--acc-l); --on-accent:#FFFFFF;
+  --ok:#11784F; --warn:#9A5B00; --danger:#C2382C; --flame:#D4610F;
+  --overlay:rgb(14 20 17 / .45);
+  --shadow:0 1px 2px rgb(24 32 27 / .06), 0 10px 28px -12px rgb(24 32 27 / .2);
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Manrope", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono:var(--f-body);
+  --r:1.25rem;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1210; --surface:#171E1B; --surface-2:#222B27; --line:#323D38;
+    --ink:#EEF3F0; --muted:#B4BEB8; --faint:#87928C;
+    --accent:var(--acc-d); --on-accent:#0B1020;
+    --ok:#4FCB94; --warn:#EDB04E; --danger:#FF8073; --flame:#FFA05A;
+    --overlay:rgb(0 0 0 / .62);
+    --shadow:0 0 0 1px rgb(255 255 255 / .04);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1210; --surface:#171E1B; --surface-2:#222B27; --line:#323D38;
+  --ink:#EEF3F0; --muted:#B4BEB8; --faint:#87928C;
+  --accent:var(--acc-d); --on-accent:#0B1020;
+  --ok:#4FCB94; --warn:#EDB04E; --danger:#FF8073; --flame:#FFA05A;
+  --overlay:rgb(0 0 0 / .62);
+  --shadow:0 0 0 1px rgb(255 255 255 / .04);
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{height:100%;font-size:17px}
+#app{height:100%}
+body{height:100%;margin:0;background:var(--bg);color:var(--ink);font:500 1rem/1.5 var(--f-body);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:.6rem}
+svg.i{width:1.25rem;height:1.25rem;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tnum{font-variant-numeric:tabular-nums}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+.eyebrow{font-size:.9rem;font-weight:700;color:var(--muted)}
+
+/* splash */
+.splash{height:100%;display:grid;place-items:center;gap:.8rem;align-content:center}
+.splash .mark{font:800 2.8rem/1 var(--f-display);letter-spacing:-.03em}
+.dots{display:flex;gap:.4rem}
+.dots span{width:.65rem;height:1.4rem;border-radius:.4rem;background:var(--surface-2);animation:fill 1.4s infinite ease-in-out}
+.dots span:nth-child(2){animation-delay:.12s}.dots span:nth-child(3){animation-delay:.24s}.dots span:nth-child(4){animation-delay:.36s}.dots span:nth-child(5){animation-delay:.48s}
+@keyframes fill{0%,100%{background:var(--surface-2)}40%{background:var(--accent)}}
+
+/* auth */
+.auth{height:100%;overflow-y:auto;padding:1.6rem 16px 2.5rem}
+.auth-in{max-width:26rem;margin:0 auto;display:grid;gap:1.3rem}
+.brand{display:grid;gap:.5rem;padding-top:.5rem}
+.brand .mark{font:800 3.6rem/.95 var(--f-display);letter-spacing:-.04em}
+.brand .mark em{font-style:normal;color:var(--accent)}
+.brand p{margin:0;color:var(--muted);font-size:1.05rem;max-width:30ch}
+.pillbox-demo{display:grid;grid-template-columns:repeat(7,1fr);gap:.35rem}
+.pillbox-demo div{display:grid;gap:.3rem;justify-items:center}
+.pillbox-demo b{font-size:.75rem;font-weight:700;color:var(--muted)}
+.pillbox-demo i{display:block;width:100%;height:2.6rem;border-radius:.75rem;background:var(--surface-2);position:relative;overflow:hidden}
+.pillbox-demo i::after{content:"";position:absolute;inset:auto 0 0 0;height:var(--h);background:var(--accent);border-radius:inherit;animation:rise 1.2s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d)}
+@keyframes rise{from{height:0}}
+.card{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow)}
+.auth-card{padding:1.2rem;display:grid;gap:1rem}
+.seg{display:flex;background:var(--surface-2);border-radius:.9rem;padding:.25rem;gap:.25rem}
+.seg button{flex:1;padding:.65rem .5rem;border-radius:.7rem;font-weight:700;font-size:.95rem;color:var(--muted);white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgb(0 0 0 / .15)}
+.field{display:grid;gap:.35rem}
+.field>label,.lbl{font-size:.95rem;font-weight:700;color:var(--ink)}
+.inp{width:100%;font-size:max(16px,1.05rem);font-weight:600;padding:.8rem .9rem;border-radius:.8rem;border:2px solid var(--line);background:var(--bg);outline:none;transition:border-color .15s;min-height:3.1rem}
+.inp:focus{border-color:var(--accent)}
+.inp::placeholder{color:var(--faint);font-weight:500}
+textarea.inp{min-height:5rem;resize:vertical}
+select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 1.1rem) 52%,calc(100% - .8rem) 52%;background-size:.35rem .35rem;background-repeat:no-repeat;padding-right:2.2rem}
+.pw{position:relative}
+.pw .inp{padding-right:3.2rem}
+.pw button{position:absolute;right:.3rem;top:50%;transform:translateY(-50%);width:2.6rem;height:2.6rem;display:grid;place-items:center;color:var(--muted);border-radius:.6rem}
+.row{display:flex;align-items:center;gap:.6rem}
+.between{justify-content:space-between}
+.wrap{flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.85rem 1.1rem;min-height:3.1rem;border-radius:.9rem;font-weight:800;font-size:1.05rem;transition:transform .1s,filter .15s}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--accent);color:var(--on-accent)}
+.btn-primary:hover{filter:brightness(1.06)}
+.btn-ghost{background:var(--surface-2);color:var(--ink)}
+.btn-danger{background:color-mix(in srgb,var(--danger) 13%,transparent);color:var(--danger)}
+.btn-block{width:100%}
+.btn-sm{padding:.55rem .9rem;min-height:2.6rem;font-size:.95rem;border-radius:.75rem}
+.link{color:var(--accent);font-weight:800;font-size:.95rem;padding:.3rem 0;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px}
+.err{color:var(--danger);font-size:.95rem;font-weight:700}
+.err:empty{display:none}
+.note{font-size:.9rem;color:var(--muted);display:flex;gap:.5rem;align-items:flex-start;margin:0}
+.note svg{margin-top:.15rem;width:1.05rem;height:1.05rem}
+.check-row{display:flex;align-items:center;gap:.6rem;font-size:1rem;font-weight:600;color:var(--ink);cursor:pointer;min-height:2.6rem}
+.check-row input{width:1.3rem;height:1.3rem;accent-color:var(--accent)}
+.quick-acc{display:flex;gap:.5rem;flex-wrap:wrap}
+.quick-acc button{display:flex;align-items:center;gap:.5rem;padding:.35rem .8rem .35rem .35rem;border-radius:999px;background:var(--surface-2);font-weight:700;font-size:.9rem}
+
+/* shell */
+.shell{height:100%;display:grid;grid-template-rows:auto 1fr;max-width:640px;margin:0 auto;position:relative}
+.top{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.9rem 16px .6rem}
+.top h1{font-size:1.85rem;line-height:1.1;font-weight:800}
+.top .eyebrow{margin-bottom:.2rem}
+.avatar{width:2.9rem;height:2.9rem;border-radius:50%;display:grid;place-items:center;font:800 1.1rem var(--f-display);color:#fff;background:var(--c,var(--accent));flex:none;box-shadow:0 0 0 3px var(--bg),0 0 0 4.5px var(--line)}
+.avatar.sm{width:1.9rem;height:1.9rem;font-size:.85rem;box-shadow:none}
+.view{overflow-y:auto;overflow-x:hidden;padding:.25rem 16px calc(8.5rem + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch}
+.stack{display:grid;gap:1.1rem}
+
+.tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:640px;z-index:20;padding:.5rem 10px calc(.6rem + env(safe-area-inset-bottom,0px));background:linear-gradient(to top,var(--bg) 65%,transparent)}
+.tabbar-in{display:grid;grid-template-columns:1fr 1fr 1.15fr 1fr 1fr;align-items:end;background:var(--surface);border-radius:1.5rem;box-shadow:var(--shadow);border:1px solid var(--line);padding:.35rem .3rem .45rem}
+.tab{display:grid;justify-items:center;gap:.15rem;font-size:.8rem;font-weight:800;color:var(--muted);padding:.4rem 0;border-radius:.9rem;min-height:3.4rem;align-content:center}
+.tab svg{width:1.5rem;height:1.5rem}
+.tab[aria-current="page"]{color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.fab-wrap{display:grid;justify-items:center;gap:.15rem;font-size:.8rem;font-weight:800;color:var(--ink)}
+.fab{width:3.6rem;height:3.6rem;border-radius:1.25rem;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;margin-top:-1.6rem;box-shadow:0 10px 24px -8px color-mix(in srgb,var(--accent) 70%,transparent);transition:transform .15s}
+.fab:active{transform:scale(.94)}
+.fab svg{width:1.75rem;height:1.75rem;stroke-width:2.6}
+
+/* pillbox week strip */
+.week{display:grid;grid-template-columns:2.2rem 1fr 2.2rem;align-items:center;gap:.2rem}
+.week-nav{width:2.2rem;height:3rem;display:grid;place-items:center;color:var(--ink);border-radius:.7rem}
+.week-nav svg{width:1.4rem;height:1.4rem}
+.week-days{display:grid;grid-template-columns:repeat(7,1fr);gap:.25rem;background:var(--surface);padding:.35rem;border-radius:1.1rem;box-shadow:var(--shadow)}
+.wd{display:grid;justify-items:center;gap:.05rem;padding:.4rem 0 .45rem;border-radius:.8rem;position:relative;overflow:hidden;isolation:isolate;min-width:0}
+.wd .n{font:800 1.1rem var(--f-display);line-height:1.15}
+.wd .d{font-size:.72rem;font-weight:800;color:var(--muted)}
+.wd .lvl{position:absolute;inset:auto 0 0 0;height:var(--h,0%);background:color-mix(in srgb,var(--accent) 20%,transparent);z-index:-1;transition:height .5s cubic-bezier(.2,.8,.2,1)}
+.wd.full .lvl{background:color-mix(in srgb,var(--accent) 32%,transparent)}
+.wd.today .n,.wd.today .d{color:var(--accent)}
+.wd[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.wd[aria-pressed="true"] .d,.wd[aria-pressed="true"].today .n,.wd[aria-pressed="true"].today .d{color:var(--bg)}
+.wd[aria-pressed="true"] .lvl{background:color-mix(in srgb,var(--bg) 24%,transparent)}
+.wd .pip{width:.3rem;height:.3rem;border-radius:50%;background:currentColor;opacity:.55;margin-top:.1rem}
+.wd .pip.off{opacity:0}
+
+/* progress hero */
+.hero{display:grid;grid-template-columns:auto 1fr;gap:1.1rem;align-items:center;padding:1.1rem}
+.ring{width:6.2rem;height:6.2rem;position:relative}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:10}
+.ring .bgc{stroke:var(--surface-2)}
+.ring .fgc{stroke:var(--accent);stroke-linecap:round;transition:stroke-dashoffset .7s cubic-bezier(.2,.8,.2,1)}
+.ring .val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:1px;font:800 1.55rem var(--f-display);letter-spacing:-.02em}
+.ring .val small{font-size:.9rem;font-weight:800;color:var(--muted)}
+.hero h2{font-size:1.35rem;line-height:1.2}
+.hero p{margin:.25rem 0 0;color:var(--muted);font-size:1rem;font-weight:600}
+.badges{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem}
+.badge{display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .65rem .25rem .45rem;border-radius:999px;font-size:.88rem;font-weight:800;background:var(--surface-2)}
+.badge svg{width:1rem;height:1rem}
+.badge.flame{color:var(--flame);background:color-mix(in srgb,var(--flame) 13%,transparent)}
+.badge.warn{color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent)}
+.badge.ok{color:var(--ok);background:color-mix(in srgb,var(--ok) 13%,transparent)}
+
+.alert{display:flex;gap:.75rem;align-items:center;padding:.85rem 1rem;border-radius:1rem;background:color-mix(in srgb,var(--warn) 13%,var(--surface));color:var(--ink);font-size:1rem;cursor:pointer;border:2px solid color-mix(in srgb,var(--warn) 35%,transparent)}
+.alert svg{color:var(--warn);width:1.5rem;height:1.5rem}
+.alert b{font-weight:800}
+
+/* task items */
+.sec{display:grid;gap:.5rem}
+.sec-h{display:flex;align-items:center;justify-content:space-between;padding:0 .25rem}
+.sec-h h3{display:flex;align-items:center;gap:.45rem;font-size:1.15rem;font-weight:800}
+.sec-h h3 svg{width:1.3rem;height:1.3rem;color:var(--muted)}
+.sec-h span{font-size:.9rem;font-weight:700;color:var(--muted)}
+.list{display:grid;background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.item{display:grid;grid-template-columns:auto 1fr auto;gap:.85rem;align-items:center;padding:.85rem 1rem;cursor:pointer;position:relative;transition:background .15s;min-height:4.4rem}
+.item+.item{border-top:1px solid var(--line)}
+.item:hover{background:color-mix(in srgb,var(--surface-2) 45%,transparent)}
+.check{width:2.75rem;height:2.75rem;border-radius:50%;border:3px solid var(--c);display:grid;place-items:center;color:transparent;transition:background .2s,color .2s,transform .15s;position:relative;background:var(--surface)}
+.check::after{content:"";position:absolute;inset:-.5rem}
+.check svg{width:1.45rem;height:1.45rem;stroke-width:3.2}
+.check:active{transform:scale(.88)}
+.is-done .check{background:var(--c);color:#fff}
+.is-skip .check{border-style:dashed;opacity:.6}
+.check.pop{animation:pop .4s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{0%{transform:scale(.7)}100%{transform:scale(1)}}
+.item-main{min-width:0}
+.item-title{font-weight:800;font-size:1.12rem;line-height:1.3;overflow-wrap:anywhere;display:flex;gap:.4rem;align-items:center}
+.item-title .star{width:1.05rem;height:1.05rem;color:var(--warn);fill:var(--warn)}
+.is-done .item-title{color:var(--muted);text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:var(--faint)}
+.item-meta{display:flex;flex-wrap:wrap;gap:.2rem .7rem;font-size:.92rem;font-weight:600;color:var(--muted);margin-top:.2rem;align-items:center}
+.item-meta span{display:inline-flex;align-items:center;gap:.25rem}
+.item-meta svg{width:.95rem;height:.95rem}
+.time{font-weight:800;color:var(--ink);background:var(--surface-2);padding:.05rem .45rem;border-radius:.4rem}
+.is-now .time{background:var(--accent);color:var(--on-accent)}
+.is-now::before{content:"";position:absolute;left:0;top:.8rem;bottom:.8rem;width:4px;border-radius:0 4px 4px 0;background:var(--accent)}
+.overdue .time{background:color-mix(in srgb,var(--danger) 14%,transparent);color:var(--danger)}
+.m-flame{color:var(--flame);font-weight:800}
+.m-low{color:var(--warn);font-weight:800}
+.m-done{color:var(--ok);font-weight:800}
+.m-late{color:var(--danger);font-weight:800}
+.m-star{color:var(--warn);font-weight:800}
+.m-star svg{fill:var(--warn)}
+.check:not([aria-pressed="true"]){color:color-mix(in srgb,var(--c) 40%,transparent)}
+.is-star{background:color-mix(in srgb,var(--warn) 6%,transparent)}
+.do-btn{display:inline-flex;align-items:center;gap:.3rem;padding:.55rem .95rem;min-height:2.75rem;border-radius:999px;font-weight:800;font-size:.98rem;background:var(--accent);color:var(--on-accent);white-space:nowrap;transition:transform .1s}
+.do-btn:active{transform:scale(.95)}
+.do-btn.on{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.do-btn svg{width:1.1rem;height:1.1rem;stroke-width:3}
+.is-skip .do-btn{background:var(--surface-2);color:var(--muted)}
+.cat-ic{width:2.4rem;height:2.4rem;border-radius:.8rem;display:grid;place-items:center;color:var(--c);background:color-mix(in srgb,var(--c) 15%,transparent)}
+.cat-ic svg{width:1.25rem;height:1.25rem}
+.cat-ic.lg{width:3.2rem;height:3.2rem;border-radius:1rem}
+.cat-ic.lg svg{width:1.6rem;height:1.6rem}
+
+.empty{padding:1.8rem 1.2rem;text-align:center;display:grid;gap:.75rem;justify-items:center}
+.empty h3{font-size:1.35rem}
+.empty p{margin:0;color:var(--muted);max-width:32ch;font-size:1rem}
+.tpl-grid{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center}
+.tpl{display:inline-flex;align-items:center;gap:.45rem;padding:.6rem 1rem .6rem .75rem;border-radius:999px;background:var(--surface-2);font-weight:800;font-size:.98rem;min-height:2.8rem;transition:background .15s}
+.tpl:hover{background:color-mix(in srgb,var(--accent) 14%,var(--surface-2))}
+.tpl svg{width:1.15rem;height:1.15rem;color:var(--accent)}
+.done-toggle{display:flex;align-items:center;gap:.4rem;margin:0 auto;font-size:.95rem;font-weight:800;color:var(--ink);padding:.6rem 1.1rem;border-radius:999px;background:var(--surface);box-shadow:var(--shadow);min-height:2.8rem}
+
+/* calendar */
+.cal{padding:.9rem}
+.cal-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem}
+.cal-h h2{font-size:1.35rem}
+.icon-btn{width:2.75rem;height:2.75rem;border-radius:.8rem;display:grid;place-items:center;background:var(--surface-2);color:var(--ink)}
+.icon-btn svg{width:1.4rem;height:1.4rem}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:.25rem}
+.cal-dow{font-size:.78rem;font-weight:800;text-align:center;color:var(--muted);padding:.25rem 0}
+.cd{aspect-ratio:1;max-width:100%;border-radius:.75rem;display:grid;place-items:center;position:relative;font:800 1.02rem var(--f-display);isolation:isolate;overflow:hidden}
+.cd.out{opacity:.3}
+.cd .f{position:absolute;inset:auto 0 0 0;height:var(--h,0%);background:color-mix(in srgb,var(--accent) 24%,transparent);z-index:-1}
+.cd.full .f{background:color-mix(in srgb,var(--accent) 40%,transparent)}
+.cd.today{box-shadow:inset 0 0 0 2.5px var(--accent)}
+.cd[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.cd[aria-pressed="true"] .f{background:color-mix(in srgb,var(--bg) 25%,transparent)}
+.cd .cnt{position:absolute;bottom:.25rem;left:50%;transform:translateX(-50%);display:flex;gap:2px}
+.cd .cnt i{width:.25rem;height:.25rem;border-radius:50%;background:currentColor;opacity:.5}
+.legend{display:flex;gap:.9rem;flex-wrap:wrap;font-size:.85rem;font-weight:600;color:var(--muted);margin-top:.6rem}
+.legend span{display:inline-flex;align-items:center;gap:.4rem}
+.legend i{width:.8rem;height:.8rem;border-radius:.25rem;display:inline-block}
+
+/* tasks view */
+.search{position:relative}
+.search svg{position:absolute;left:.9rem;top:50%;transform:translateY(-50%);color:var(--muted)}
+.search .inp{padding-left:2.7rem;background:var(--surface);border-color:transparent;box-shadow:var(--shadow)}
+.chips{display:flex;gap:.4rem;overflow-x:auto;padding:2px 16px .4rem;margin:0 -16px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;display:inline-flex;align-items:center;gap:.4rem;padding:.5rem .9rem;min-height:2.6rem;border-radius:999px;font-weight:800;font-size:.92rem;background:var(--surface);border:2px solid var(--line);color:var(--ink);white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip i{width:.55rem;height:.55rem;border-radius:50%;background:var(--c)}
+.chip .ct{font-size:.8rem;opacity:.7}
+.tcard .item-meta .next{color:var(--ink);font-weight:800}
+.paused-tag{font-size:.78rem;font-weight:800;padding:.1rem .5rem;border-radius:.4rem;background:var(--surface-2);color:var(--muted)}
+
+/* stats */
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem}
+.tile{padding:.9rem 1rem;display:grid;gap:.1rem}
+.tile .v{font:800 2rem/1.05 var(--f-display);letter-spacing:-.02em}
+.tile .v small{font-size:1rem;color:var(--muted);font-weight:800}
+.tile .k{font-size:.9rem;font-weight:800;color:var(--muted)}
+.panel{padding:1rem;display:grid;gap:.8rem}
+.panel-h{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;flex-wrap:wrap}
+.panel-h h3{font-size:1.1rem}
+.panel-h span{font-size:.88rem;font-weight:600;color:var(--muted)}
+.bars{display:grid;grid-template-columns:repeat(14,1fr);gap:.25rem;align-items:end;height:8rem;position:relative}
+.bars .grid-l{position:absolute;left:0;right:0;border-top:1px dashed var(--line);font-size:.68rem;font-weight:700;color:var(--faint)}
+.bar{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:.25rem;position:relative;z-index:1}
+.bar i{display:block;width:100%;max-width:1.1rem;border-radius:4px 4px 2px 2px;background:var(--accent);min-height:2px}
+.bar.none i{background:var(--surface-2)}
+.bar.today i{background:var(--ink)}
+.bar-x{display:grid;grid-template-columns:repeat(14,1fr);gap:.25rem;font-size:.7rem;font-weight:700;color:var(--muted);text-align:center}
+.heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:3px;overflow-x:auto;padding-bottom:2px}
+.heat i{width:100%;min-width:.7rem;aspect-ratio:1;border-radius:3px;background:var(--surface-2);display:block}
+.heat i.l1{background:color-mix(in srgb,var(--accent) 28%,var(--surface-2))}
+.heat i.l2{background:color-mix(in srgb,var(--accent) 52%,var(--surface-2))}
+.heat i.l3{background:color-mix(in srgb,var(--accent) 76%,var(--surface-2))}
+.heat i.l4{background:var(--accent)}
+.heat i.fut{background:transparent;box-shadow:inset 0 0 0 1px var(--line)}
+.heat-wrap{display:grid;grid-template-columns:auto 1fr;gap:.4rem}
+.heat-dow{display:grid;grid-template-rows:repeat(7,1fr);gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)}
+.heat-dow span{display:flex;align-items:center}
+.rates{display:grid;gap:.8rem}
+.rate{display:grid;grid-template-columns:auto 1fr auto;gap:.6rem;align-items:center}
+.rate-name{font-weight:800;font-size:.98rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rate-bar{height:.45rem;border-radius:4px;background:var(--surface-2);overflow:hidden;margin-top:.3rem}
+.rate-bar i{display:block;height:100%;border-radius:4px;background:var(--c,var(--accent))}
+.rate-v{font-weight:800;font-size:.95rem;color:var(--ink);text-align:right;min-width:2.6rem}
+.dow-bars{display:grid;grid-template-columns:repeat(7,1fr);gap:.5rem;align-items:end;height:6.5rem}
+.dow-bars .bar span{font-size:.75rem;font-weight:800;color:var(--muted)}
+.insight{font-size:.98rem;color:var(--muted)}
+.insight b{color:var(--ink)}
+
+/* sheets & modals */
+.overlay{position:fixed;inset:0;background:var(--overlay);z-index:40;opacity:0;transition:opacity .25s}
+.overlay.in{opacity:1}
+.sheet{position:fixed;left:50%;bottom:0;width:100%;max-width:640px;max-height:calc(100% - 1.5rem - env(safe-area-inset-top,0px));transform:translate(-50%,104%);background:var(--bg);border-radius:1.6rem 1.6rem 0 0;z-index:41;display:flex;flex-direction:column;transition:transform .32s cubic-bezier(.2,.85,.25,1);box-shadow:0 -10px 40px rgb(0 0 0 / .18)}
+.sheet.in{transform:translate(-50%,0)}
+.sheet-grip{width:2.5rem;height:.3rem;border-radius:3px;background:var(--line);margin:.55rem auto 0;flex:none}
+.sheet-h{display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.6rem 16px .5rem;flex:none}
+.sheet-h h2{font-size:1.4rem}
+.sheet-b{overflow-y:auto;padding:.4rem 16px 1.2rem;display:grid;gap:1.2rem;align-content:start;-webkit-overflow-scrolling:touch}
+.sheet-f{padding:.75rem 16px calc(.85rem + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);display:flex;gap:.6rem;flex:none;background:var(--bg)}
+.sheet-f .btn{flex:1}
+.close-btn{display:inline-flex;align-items:center;gap:.3rem;padding:.5rem .8rem;min-height:2.75rem;border-radius:.8rem;background:var(--surface-2);font-weight:800;font-size:.95rem}
+.close-btn svg{width:1.1rem;height:1.1rem;stroke-width:2.6}
+.modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-46%) scale(.97);width:calc(100% - 32px);max-width:26rem;max-height:calc(100% - 32px);overflow-y:auto;background:var(--surface);border-radius:1.5rem;padding:1.3rem;z-index:51;display:grid;gap:.9rem;opacity:0;transition:all .22s cubic-bezier(.2,.85,.25,1);box-shadow:0 20px 60px rgb(0 0 0 / .3)}
+.modal.in{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.modal h2{font-size:1.35rem}
+.modal p{margin:0;color:var(--muted);font-size:1rem}
+.modal-over{z-index:50}
+.code-box{font-size:1.4rem;font-weight:800;letter-spacing:.08em;text-align:center;padding:1rem;border-radius:.9rem;background:var(--surface-2);user-select:all;word-break:break-all}
+
+/* editor */
+.title-inp{font:700 1.45rem var(--f-display);border:0;border-bottom:2px solid var(--line);background:transparent;padding:.4rem 0;outline:none;width:100%;letter-spacing:-.01em}
+.title-inp:focus{border-bottom-color:var(--accent)}
+.title-inp::placeholder{color:var(--faint)}
+.summary{display:flex;gap:.5rem;align-items:center;font-size:.98rem;font-weight:800;color:var(--accent);background:color-mix(in srgb,var(--accent) 11%,transparent);padding:.7rem .9rem;border-radius:.8rem}
+.summary svg{width:1.1rem;height:1.1rem}
+.grp{display:grid;gap:.6rem}
+.grp>.lbl{font-size:1.08rem;font-weight:800;font-family:var(--f-display)}
+.box{background:var(--surface);border-radius:1rem;padding:.9rem;display:grid;gap:.8rem;box-shadow:var(--shadow)}
+.opts{display:grid;background:var(--surface);border-radius:1rem;box-shadow:var(--shadow);overflow:hidden}
+.opt{display:grid;grid-template-columns:auto 1fr;gap:.8rem;align-items:center;text-align:left;padding:.8rem 1rem;min-height:3.6rem}
+.opt+.opt{border-top:1px solid var(--line)}
+.opt .radio{width:1.5rem;height:1.5rem;border-radius:50%;border:2.5px solid var(--faint);display:grid;place-items:center}
+.opt[aria-pressed="true"] .radio{border-color:var(--accent)}
+.opt[aria-pressed="true"] .radio::after{content:"";width:.75rem;height:.75rem;border-radius:50%;background:var(--accent)}
+.opt[aria-pressed="true"]{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.opt b{display:block;font-size:1.05rem;font-weight:800}
+.opt small{display:block;font-size:.88rem;color:var(--muted);font-weight:600}
+.opt-more{padding:.2rem 1rem 1rem 3.3rem;display:grid;gap:.7rem;background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.daypick{display:grid;grid-template-columns:repeat(7,1fr);gap:.3rem}
+.daypick button{padding:.7rem 0;min-height:2.8rem;border-radius:.7rem;font-weight:800;font-size:.85rem;background:var(--surface);border:2px solid var(--line);color:var(--ink)}
+.daypick button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.stepper{display:inline-flex;align-items:center;background:var(--surface-2);border-radius:.8rem}
+.stepper button{width:2.75rem;height:2.75rem;display:grid;place-items:center;font-size:1.3rem;font-weight:800}
+.stepper output{min-width:1.8rem;text-align:center;font-weight:800;font-size:1.05rem}
+.times{display:grid;gap:.5rem}
+.time-row{display:flex;gap:.5rem;align-items:center}
+.time-row .inp{font-weight:800;font-size:1.15rem}
+.del-btn{min-width:3.1rem;height:3.1rem;flex:none;border-radius:.8rem;display:grid;place-items:center;color:var(--danger);background:color-mix(in srgb,var(--danger) 11%,transparent);font-weight:800;font-size:.85rem}
+.switch{position:relative;width:3.2rem;height:1.9rem;flex:none}
+.switch input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer;z-index:1}
+.switch span{position:absolute;inset:0;border-radius:99px;background:var(--line);transition:background .2s}
+.switch span::after{content:"";position:absolute;width:1.5rem;height:1.5rem;border-radius:50%;background:#fff;top:.2rem;left:.2rem;transition:transform .2s;box-shadow:0 1px 3px rgb(0 0 0 / .25)}
+.switch input:checked+span{background:var(--accent)}
+.switch input:checked+span::after{transform:translateX(1.3rem)}
+.switch input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:.75rem;min-height:2.6rem}
+.set-row .t{font-weight:800;font-size:1.02rem}
+.set-row .s{font-size:.88rem;color:var(--muted);font-weight:600}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem}
+.mini .inp{padding:.6rem .5rem;text-align:center;font-weight:800}
+.mini label{font-size:.82rem;text-align:center}
+.swatches{display:flex;gap:.7rem;flex-wrap:wrap}
+.sw{width:2.5rem;height:2.5rem;border-radius:50%;background:var(--c);display:grid;place-items:center;color:#fff}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 3px var(--surface),0 0 0 5.5px var(--c)}
+.sw svg{width:1.1rem;height:1.1rem;stroke-width:3;opacity:0}
+.sw[aria-pressed="true"] svg{opacity:1}
+.icons{display:grid;grid-template-columns:repeat(6,1fr);gap:.4rem}
+.icons button{aspect-ratio:1;max-width:100%;border-radius:.8rem;display:grid;place-items:center;background:var(--surface-2);color:var(--muted)}
+.icons button[aria-pressed="true"]{background:var(--c);color:#fff}
+.chip-c[aria-pressed="true"]{background:var(--c);border-color:var(--c);color:#fff}
+.chip-c[aria-pressed="true"] i{background:#fff}
+.prio-pick{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.prio-pick button{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;min-height:3.2rem;padding:.6rem .5rem;border-radius:1rem;font-weight:800;font-size:1.02rem;background:var(--surface);border:2.5px solid var(--line);color:var(--ink);box-shadow:var(--shadow)}
+.prio-pick button svg{width:1.2rem;height:1.2rem}
+.prio-pick button[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+.prio-pick .yes[aria-pressed="true"]{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,var(--surface));color:var(--warn)}
+.prio-pick .yes[aria-pressed="true"] svg{fill:var(--warn)}
+.more-toggle{display:flex;align-items:center;gap:.6rem;width:100%;padding:.9rem 1rem;min-height:3.4rem;border-radius:1rem;background:var(--surface);font-weight:800;font-size:1.05rem;box-shadow:var(--shadow);text-align:left}
+.more-toggle .grow{flex:1;min-width:0}
+.more-toggle small{display:block;font-size:.85rem;color:var(--muted);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.more-toggle>svg:last-child{transition:transform .2s;color:var(--muted)}
+.more-toggle[aria-expanded="true"]>svg:last-child{transform:rotate(180deg)}
+.fs-seg button{display:grid;justify-items:center;gap:0;line-height:1.1;padding:.5rem .3rem}
+.fs-seg b{font-family:var(--f-display);font-weight:800}
+
+/* detail */
+.d-head{display:flex;gap:.9rem;align-items:center}
+.d-head h2{font-size:1.45rem;line-height:1.2;overflow-wrap:anywhere}
+.d-head p{margin:.15rem 0 0;color:var(--muted);font-size:.98rem;font-weight:600}
+.d-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
+.d-stat{background:var(--surface);border-radius:1rem;padding:.75rem .5rem;text-align:center;box-shadow:var(--shadow)}
+.d-stat .v{font:800 1.6rem/1.1 var(--f-display)}
+.d-stat .k{font-size:.82rem;font-weight:800;color:var(--muted)}
+.mcal{display:grid;grid-template-columns:repeat(7,1fr);gap:.3rem}
+.mcal i{height:2.1rem;border-radius:.5rem;display:grid;place-items:center;font-size:.8rem;font-weight:800;font-style:normal;color:var(--faint)}
+.mcal i.no{opacity:.4}
+.mcal i.miss{background:color-mix(in srgb,var(--danger) 14%,transparent);color:var(--danger)}
+.mcal i.part{background:color-mix(in srgb,var(--c) 30%,transparent);color:var(--ink)}
+.mcal i.done{background:var(--c);color:#fff}
+.mcal i.skip{box-shadow:inset 0 0 0 1.5px var(--line);color:var(--muted)}
+.mcal i.pend{box-shadow:inset 0 0 0 2px var(--c);color:var(--ink)}
+.actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(4.6rem,1fr));gap:.5rem}
+.act{display:grid;justify-items:center;gap:.35rem;padding:.8rem .25rem;min-height:4.4rem;border-radius:1rem;background:var(--surface);font-size:.88rem;font-weight:800;color:var(--ink);box-shadow:var(--shadow)}
+.act svg{color:var(--ink);width:1.4rem;height:1.4rem}
+.act.danger svg,.act.danger{color:var(--danger)}
+.next-list{display:grid;gap:.4rem;font-size:.98rem;font-weight:600}
+.next-list div{display:flex;justify-content:space-between;gap:.6rem}
+.next-list span:last-child{color:var(--muted)}
+
+/* settings */
+.prof{display:flex;gap:.9rem;align-items:center;padding:1rem}
+.prof .avatar{width:3.5rem;height:3.5rem;font-size:1.4rem}
+.prof h3{font-size:1.25rem}
+.prof p{margin:0;color:var(--muted);font-size:.95rem;font-weight:600}
+.set-list{display:grid}
+.set-list>*{padding:.85rem 1rem;min-height:3.4rem}
+.set-list>*+*{border-top:1px solid var(--line)}
+.set-btn{display:flex;align-items:center;gap:.75rem;width:100%;text-align:left;font-weight:800;font-size:1.02rem}
+.set-btn svg:first-child{color:var(--muted)}
+.set-btn .grow{flex:1}
+.set-btn.danger,.set-btn.danger svg:first-child{color:var(--danger)}
+.sync{display:inline-flex;align-items:center;gap:.4rem;font-size:.88rem;font-weight:800;padding:.3rem .7rem;border-radius:999px}
+.sync.on{color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,transparent)}
+.sync.off{color:var(--muted);background:var(--surface-2)}
+.sync svg{width:1rem;height:1rem}
+
+/* toast */
+.toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(6.6rem + env(safe-area-inset-bottom,0px));z-index:60;display:grid;gap:.5rem;width:calc(100% - 32px);max-width:28rem;pointer-events:none}
+.toast{display:flex;align-items:center;gap:.75rem;padding:.85rem 1rem;border-radius:1rem;background:var(--ink);color:var(--bg);font-weight:700;font-size:1rem;box-shadow:0 10px 30px rgb(0 0 0 / .25);pointer-events:none;animation:tin .3s cubic-bezier(.2,.85,.25,1)}
+.toast .grow{flex:1}
+.toast button{pointer-events:auto;color:var(--bg);font-weight:800;padding:.35rem .7rem;border-radius:.6rem;border:2px solid currentColor;min-height:2.4rem}
+@keyframes tin{from{opacity:0;transform:translateY(12px)}}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:70;width:100%;height:100%}
+
+@media (min-width:640px){ .tiles{grid-template-columns:repeat(4,1fr)} }
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+</style>
+</head>
+<body>
+
+
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M5 20v-6M12 20V5M19 20v-10"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3c1 3 4.5 4.6 4.5 9a4.5 4.5 0 0 1-9 0c0-2 1-3.3 2-4.3.3 1.6 1.2 2.6 2.2 2.8C11 8.2 11.3 5.4 12 3z"/></symbol>
+  <symbol id="i-pill" viewBox="0 0 24 24"><g transform="rotate(-45 12 12)"><rect x="3" y="8.5" width="18" height="7" rx="3.5"/><path d="M12 8.5v7"/></g></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z"/></symbol>
+  <symbol id="i-skip" viewBox="0 0 24 24"><path d="M5 5l10 7-10 7zM19 5v14"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15zM10 21h4"/></symbol>
+  <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M17 2l3 3-3 3M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3M20 13v2a4 4 0 0 1-4 4H4"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M15 8l2 2"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18a4.5 4.5 0 0 1-.6-9A6 6 0 0 1 18 9.5a4 4 0 0 1-1 8.5z"/></symbol>
+  <symbol id="i-device" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18h2"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 7.4 4.2 4.2 0 0 1 19.5 10C19.5 15.4 12 20 12 20z"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7M6 9.5V20h12V9.5M10 20v-5h4v5"/></symbol>
+  <symbol id="i-briefcase" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M9 7V5h6v2M3 13h18"/></symbol>
+  <symbol id="i-dumbbell" viewBox="0 0 24 24"><path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11"/></symbol>
+  <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h2.5l2.2 10.5h10l2-7.5H6.5"/><circle cx="9.5" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/></symbol>
+  <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3.5s6 6.4 6 10.5a6 6 0 0 1-12 0c0-4.1 6-10.5 6-10.5z"/></symbol>
+  <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM18.5 15.5l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/></symbol>
+  <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15M5 19l7-7"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-archive" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v10h14V9M10 13h4"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M3.5 7.5L12 3l8.5 4.5v9L12 21l-8.5-4.5zM3.5 7.5L12 12l8.5-4.5M12 12v9"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5l9.5 16.5h-19zM12 10v4M12 17h.01"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3 12V4h8l10 10-8 8zM7.5 8h.01"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/></symbol>
+</svg>
+
+<div id="app"></div>
+<div id="layer"></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<canvas id="confetti" hidden></canvas>
+<input type="file" id="import-file" accept=".json,application/json" hidden>
+
+<script>
+"use strict";
+/* ============================================================
+   Ritim — tekrarlayan görev & alışkanlık takipçisi
+   ============================================================ */
+
+// ---------- helpers ----------
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clone = o => JSON.parse(JSON.stringify(o));
+const rid = (p = '') => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return ymd(d); };
+const diffDays = (a, b) => Math.round((parse(b) - parse(a)) / 864e5);
+const today = () => ymd(new Date());
+const nowHM = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const dim = (y, m) => new Date(y, m + 1, 0).getDate();
+const mondayOf = s => addDays(s, -((parse(s).getDay() + 6) % 7));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const ic = (name, cls = '') => `<svg class="i ${cls}" aria-hidden="true"><use href="#i-${name}"/></svg>`;
+
+const MONTHS = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+const MON3 = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+const DAYS = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+const DAY3 = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
+const WEEK = [1, 2, 3, 4, 5, 6, 0];
+
+const fmtDate = s => { const d = parse(s); return `${d.getDate()} ${MONTHS[d.getMonth()]}`; };
+const fmtShort = s => { const d = parse(s); return `${d.getDate()} ${MON3[d.getMonth()]}`; };
+const relDay = s => {
+  const n = diffDays(today(), s);
+  if (n === 0) return 'Bugün';
+  if (n === 1) return 'Yarın';
+  if (n === -1) return 'Dün';
+  if (n > 1 && n < 7) return DAYS[parse(s).getDay()];
+  return fmtShort(s);
+};
+
+const ACCENTS = [
+  { id: 'kobalt', name: 'Kobalt', l: '#2F55E4', d: '#86A0FF' },
+  { id: 'zumrut', name: 'Zümrüt', l: '#0D8466', d: '#4FD1A8' },
+  { id: 'mor', name: 'Mor', l: '#6E45D3', d: '#B79CFF' },
+  { id: 'mercan', name: 'Mercan', l: '#D0453A', d: '#FF8A7A' },
+  { id: 'kehribar', name: 'Kehribar', l: '#A86200', d: '#F2B24A' },
+  { id: 'petrol', name: 'Petrol', l: '#13707F', d: '#5CCFDF' },
+];
+ACCENTS.push({ id: 'yesil', name: 'Yeşil', l: '#0E7C66', d: '#3FD0AE', hidden: true }, { id: 'gece', name: 'Gece', l: '#1F2430', d: '#E3E6EC', hidden: true });
+const CAT_COLORS = ['#E0565B', '#2E9E77', '#3A7BE0', '#9157DA', '#E08A23', '#1A9DB2', '#D0579B', '#7C8D35'];
+const CAT_ICONS = ['pill', 'heart', 'home', 'briefcase', 'dumbbell', 'book', 'cart', 'drop', 'sparkle', 'leaf', 'user', 'star'];
+const DEFAULT_CATS = [
+  { id: 'c_ilac', name: 'İlaç', color: '#E0565B', icon: 'pill' },
+  { id: 'c_saglik', name: 'Sağlık', color: '#2E9E77', icon: 'heart' },
+  { id: 'c_ev', name: 'Ev', color: '#E08A23', icon: 'home' },
+  { id: 'c_is', name: 'İş', color: '#3A7BE0', icon: 'briefcase' },
+  { id: 'c_spor', name: 'Spor', color: '#1A9DB2', icon: 'dumbbell' },
+  { id: 'c_kisisel', name: 'Kişisel', color: '#9157DA', icon: 'sparkle' },
+];
+const TEMPLATES = [
+  { label: 'İlaç', icon: 'pill', t: { title: 'Tansiyon ilacı', cat: 'c_ilac', rec: { type: 'daily', every: 1 }, times: ['09:00', '21:00'], stock: { on: true, qty: 28, per: 1, low: 6 } } },
+  { label: 'Su iç', icon: 'drop', t: { title: 'Bir bardak su', cat: 'c_saglik', rec: { type: 'daily', every: 1 }, times: ['10:00', '13:00', '16:00', '19:00'] } },
+  { label: 'Spor', icon: 'dumbbell', t: { title: 'Spor salonu', cat: 'c_spor', rec: { type: 'weekly', every: 1, days: [1, 3, 5] }, times: ['18:30'] } },
+  { label: 'Fatura', icon: 'home', t: { title: 'Elektrik faturasını öde', cat: 'c_ev', rec: { type: 'monthly', every: 1, mday: 15 }, times: [] } },
+  { label: 'Çiçek sula', icon: 'leaf', t: { title: 'Çiçekleri sula', cat: 'c_ev', rec: { type: 'daily', every: 3 }, times: ['08:30'] } },
+  { label: 'Kitap', icon: 'book', t: { title: '20 sayfa kitap oku', cat: 'c_kisisel', rec: { type: 'daily', every: 1 }, times: ['22:00'] } },
+  { label: 'Vitamin', icon: 'pill', t: { title: 'D vitamini', cat: 'c_ilac', rec: { type: 'weekly', every: 1, days: [0] }, times: ['10:00'], stock: { on: true, qty: 12, per: 1, low: 3 } } },
+  { label: 'Temizlik', icon: 'sparkle', t: { title: 'Haftalık temizlik', cat: 'c_ev', rec: { type: 'weekly', every: 1, days: [6] }, times: [] } },
+];
+const LP = 'ritim:';
+
+// ---------- state ----------
+const S = {
+  mode: 'local', db: null, base: '', scope: 'local',
+  accounts: [], me: null, data: null, hist: {},
+  view: 'today', sel: today(), calMonth: today().slice(0, 7), calSel: today(),
+  filter: 'active', q: '', showDone: true,
+  hostTheme: document.documentElement.getAttribute('data-theme'),
+  unsub: [], appTimer: null, notified: {}, celebrated: {}, lastToday: today(),
+};
+
+// ---------- storage layer (claude.ai db when available, otherwise this device) ----------
+const mem = {};
+const W = {};
+const Store = {
+  ref(name) { return S.db.doc(S.base + '/' + name); },
+  lsKey(name) { return LP + S.scope + ':' + name; },
+  async get(name) {
+    if (S.mode === 'cloud') {
+      let snap;
+      try { snap = await this.ref(name).get(); }
+      catch (e) { if (e && e.code === 'unavailable') { await sleep(600 + Math.random() * 600); snap = await this.ref(name).get(); } else throw e; }
+      return snap.exists ? clone(snap.data()) : null;
+    }
+    try { const v = localStorage.getItem(this.lsKey(name)); return v ? JSON.parse(v) : null; }
+    catch { return mem[name] ? clone(mem[name]) : null; }
+  },
+  async raw(name, data) {
+    if (S.mode === 'cloud') return this.ref(name).set(data);
+    try { localStorage.setItem(this.lsKey(name), JSON.stringify(data)); }
+    catch { mem[name] = clone(data); }
+  },
+  async del(name) {
+    if (S.mode === 'cloud') return this.ref(name).delete();
+    try { localStorage.removeItem(this.lsKey(name)); } catch { delete mem[name]; }
+  },
+  write(name, data) {
+    const w = W[name] || (W[name] = { busy: false, next: null });
+    w.next = clone(data);
+    if (!w.busy) this.flush(name);
+  },
+  async flush(name) {
+    const w = W[name]; w.busy = true;
+    while (w.next) {
+      const d = w.next; w.next = null;
+      try { await this.raw(name, d); }
+      catch (e) {
+        if (e && e.code === 'unavailable') {
+          await sleep(700 + Math.random() * 800);
+          try { await this.raw(name, d); } catch (e2) { saveError(e2); }
+        } else saveError(e);
+      }
+    }
+    w.busy = false;
+  },
+  pending(name) { const w = W[name]; return !!(w && (w.busy || w.next)); },
+  watch(name, cb) {
+    if (S.mode !== 'cloud') return () => {};
+    return this.ref(name).onSnapshot(snap => {
+      if (snap.metadata.hasPendingWrites || this.pending(name)) return;
+      cb(snap.exists ? clone(snap.data()) : null);
+    }, e => console.warn('watch', name, e));
+  },
+  watchHist(aid, cb) {
+    if (S.mode === 'cloud') {
+      const q = S.db.collection(S.base).where('kind', '==', 'hist').where('acct', '==', aid);
+      return q.onSnapshot(snap => {
+        if (snap.metadata.hasPendingWrites) return;
+        const out = {};
+        snap.docs.forEach(d => { if (!this.pending(d.id)) out[d.id] = clone(d.data()); });
+        cb(out);
+      }, e => console.warn('hist', e));
+    }
+    const out = {};
+    try {
+      const pre = this.lsKey('h_' + aid + '_');
+      for (let k = 0; k < localStorage.length; k++) {
+        const key = localStorage.key(k);
+        if (key && key.startsWith(pre)) out[key.slice(this.lsKey('').length)] = JSON.parse(localStorage.getItem(key));
+      }
+    } catch {
+      Object.keys(mem).filter(k => k.startsWith('h_' + aid + '_')).forEach(k => out[k] = clone(mem[k]));
+    }
+    cb(out);
+    return () => {};
+  },
+};
+let saveErrShown = 0;
+function saveError(e) {
+  console.warn('save failed', e);
+  if (Date.now() - saveErrShown < 8000) return;
+  saveErrShown = Date.now();
+  const code = e && e.code;
+  toast(code === 'quota_exceeded' ? 'Depolama alanı doldu. Eski görevleri silip tekrar dene.' :
+    code === 'invalid_argument' ? 'Bu görünümde kaydetme iznin yok.' :
+      'Değişiklik kaydedilemedi. Bağlantını kontrol et.');
+}
+
+// ---------- crypto ----------
+const enc = new TextEncoder();
+const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+const hasSubtle = () => !!(window.crypto && crypto.subtle && crypto.subtle.importKey);
+function randStr(n, alpha = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789') {
+  const a = new Uint32Array(n);
+  try { crypto.getRandomValues(a); } catch { for (let i = 0; i < n; i++) a[i] = Math.floor(Math.random() * 1e9); }
+  return [...a].map(x => alpha[x % alpha.length]).join('');
+}
+async function hashPw(pw, salt, alg) {
+  if (alg === 'pbkdf2' && hasSubtle()) {
+    const key = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
+    const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode(salt), iterations: 120000 }, key, 256);
+    return b64(bits);
+  }
+  let h1 = 0x811c9dc5, h2 = 0x01000193; const s = salt + '|' + pw;
+  for (let k = 0; k < 4000; k++) for (let j = 0; j < s.length; j++) {
+    const c = s.charCodeAt(j) + k;
+    h1 = Math.imul(h1 ^ c, 16777619); h2 = Math.imul(h2 ^ (c * 31), 2246822519);
+  }
+  return 'f' + (h1 >>> 0).toString(36) + (h2 >>> 0).toString(36);
+}
+const recoveryCode = () => { const c = randStr(12, 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'); return `${c.slice(0, 4)}-${c.slice(4, 8)}-${c.slice(8)}`; };
+const normCode = c => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+// ---------- session ----------
+function readSession() {
+  for (const st of [() => localStorage, () => sessionStorage]) {
+    try { const v = st().getItem(LP + 'session'); if (v) return JSON.parse(v); } catch {}
+  }
+  return null;
+}
+function writeSession(aid, remember) {
+  const v = JSON.stringify({ aid, scope: S.scope });
+  try { localStorage.removeItem(LP + 'session'); sessionStorage.removeItem(LP + 'session'); } catch {}
+  try { (remember ? localStorage : sessionStorage).setItem(LP + 'session', v); } catch {}
+}
+function clearSession() { try { localStorage.removeItem(LP + 'session'); sessionStorage.removeItem(LP + 'session'); } catch {} }
+function lastUsers() { try { return JSON.parse(localStorage.getItem(LP + 'recent:' + S.scope) || '[]'); } catch { return []; } }
+function pushLastUser(u) { try { const l = lastUsers().filter(x => x !== u); l.unshift(u); localStorage.setItem(LP + 'recent:' + S.scope, JSON.stringify(l.slice(0, 4))); } catch {} }
+
+// ---------- accounts ----------
+async function loadAccounts() {
+  const doc = await Store.get('accounts');
+  S.accounts = (doc && Array.isArray(doc.list)) ? doc.list : [];
+}
+async function saveAccounts() { await Store.raw('accounts', { kind: 'accounts', list: S.accounts }); }
+const findUser = u => S.accounts.find(a => a.username === String(u || '').trim().toLowerCase());
+const publicAcc = a => a && ({ id: a.id, name: a.name, username: a.username, color: a.color });
+
+async function doRegister(f) {
+  const name = f.name.trim(), username = f.username.trim().toLowerCase();
+  if (name.length < 2) throw 'Adını en az 2 harf olacak şekilde yaz.';
+  if (!/^[a-z0-9_.]{3,20}$/.test(username)) throw 'Kullanıcı adı 3–20 karakter olmalı; harf, rakam, nokta ve alt çizgi kullanabilirsin.';
+  if (f.pw.length < 6) throw 'Şifre en az 6 karakter olmalı.';
+  if (f.pw !== f.pw2) throw 'Şifreler birbiriyle eşleşmiyor.';
+  await loadAccounts();
+  if (findUser(username)) throw 'Bu kullanıcı adı alınmış. Başka bir tane dene.';
+  const alg = hasSubtle() ? 'pbkdf2' : 'fnv';
+  const salt = randStr(16), rsalt = randStr(16), code = recoveryCode();
+  const acc = {
+    id: rid('a'), name, username, alg, salt, hash: await hashPw(f.pw, salt, alg),
+    rsalt, rhash: await hashPw(normCode(code), rsalt, alg),
+    color: CAT_COLORS[S.accounts.length % CAT_COLORS.length], created: Date.now(),
+  };
+  S.accounts.push(acc);
+  await saveAccounts();
+  return { acc, code };
+}
+let failCount = 0;
+async function doLogin(username, pw) {
+  if (failCount > 3) await sleep(Math.min(4000, failCount * 500));
+  await loadAccounts();
+  const acc = findUser(username);
+  if (!acc || (await hashPw(pw, acc.salt, acc.alg)) !== acc.hash) { failCount++; throw 'Kullanıcı adı veya şifre hatalı.'; }
+  failCount = 0;
+  return acc;
+}
+async function doReset(username, code, pw, pw2) {
+  await loadAccounts();
+  const acc = findUser(username);
+  if (!acc || (await hashPw(normCode(code), acc.rsalt, acc.alg)) !== acc.rhash) { await sleep(700); throw 'Kullanıcı adı veya kurtarma kodu hatalı.'; }
+  if (pw.length < 6) throw 'Yeni şifre en az 6 karakter olmalı.';
+  if (pw !== pw2) throw 'Şifreler birbiriyle eşleşmiyor.';
+  acc.salt = randStr(16); acc.hash = await hashPw(pw, acc.salt, acc.alg);
+  await saveAccounts();
+  return acc;
+}
+
+// ---------- data model ----------
+function defaultApp() {
+  return {
+    tasks: [], cats: clone(DEFAULT_CATS),
+    settings: { theme: 'system', accent: 'kobalt', fontSize: 'normal', hideDone: false, sound: true, vibrate: true, remind: true },
+  };
+}
+function normTask(p = {}) {
+  const t0 = today(), d = parse(t0);
+  const base = {
+    id: rid('t'), title: '', note: '', cat: (S.data && S.data.cats[0] ? S.data.cats[0].id : 'c_kisisel'), priority: 0,
+    rec: { type: 'daily', every: 1, days: [d.getDay()], mday: d.getDate(), month: d.getMonth(), day: d.getDate(), date: t0 },
+    times: [], start: t0, end: null,
+    stock: { on: false, qty: 30, per: 1, low: 5 },
+    paused: false, archived: false, doneOn: null, created: Date.now(),
+  };
+  const t = { ...base, ...clone(p) };
+  t.rec = { ...base.rec, ...(p.rec || {}) };
+  t.stock = { ...base.stock, ...(p.stock || {}) };
+  t.times = Array.isArray(t.times) ? t.times : [];
+  return t;
+}
+const task = id => S.data.tasks.find(t => t.id === id);
+const cat = id => S.data.cats.find(c => c.id === id) || { id: '', name: 'Genel', color: '#7C8D35', icon: 'tag' };
+const slotsOf = t => t.times.length ? t.times : [null];
+
+function occursOn(t, s) {
+  if (t.archived) return false;
+  const r = t.rec;
+  if (r.type === 'once') return s === (t.doneOn || r.date);
+  if (t.paused) return false;
+  if (s < t.start || (t.end && s > t.end)) return false;
+  const d = parse(s), every = Math.max(1, r.every || 1);
+  switch (r.type) {
+    case 'daily': return diffDays(t.start, s) % every === 0;
+    case 'weekly': {
+      if (!r.days.includes(d.getDay())) return false;
+      if (every === 1) return true;
+      return Math.round(diffDays(mondayOf(t.start), mondayOf(s)) / 7) % every === 0;
+    }
+    case 'monthly': {
+      const sd = parse(t.start);
+      const months = (d.getFullYear() - sd.getFullYear()) * 12 + d.getMonth() - sd.getMonth();
+      if (months % every) return false;
+      const last = dim(d.getFullYear(), d.getMonth());
+      return d.getDate() === (r.mday === -1 ? last : Math.min(r.mday, last));
+    }
+    case 'yearly': {
+      if (d.getMonth() !== r.month) return false;
+      return d.getDate() === Math.min(r.day, dim(d.getFullYear(), r.month));
+    }
+  }
+  return false;
+}
+function nextOcc(t, from = today(), n = 1) {
+  if (t.rec.type === 'once') {
+    const r = t.doneOn || t.archived ? null : (t.rec.date < from ? from : t.rec.date);
+    return n === 1 ? r : (r ? [r] : []);
+  }
+  const out = []; let s = from;
+  for (let k = 0; k < 800 && out.length < n; k++) { if (occursOn(t, s)) out.push(s); s = addDays(s, 1); }
+  return n === 1 ? out[0] || null : out;
+}
+function recLabel(t, withTimes = true) {
+  const r = t.rec, e = Math.max(1, r.every || 1);
+  let s;
+  switch (r.type) {
+    case 'once': s = 'Bir kez · ' + fmtShort(r.date); break;
+    case 'daily': s = e === 1 ? 'Her gün' : `${e} günde bir`; break;
+    case 'weekly': {
+      const ds = [...r.days].sort((a, b) => WEEK.indexOf(a) - WEEK.indexOf(b));
+      let dl = ds.length === 7 ? 'her gün' : ds.join() === '1,2,3,4,5' ? 'hafta içi' : ds.join() === '6,0' ? 'hafta sonu' : ds.map(x => DAY3[x]).join(', ');
+      s = e === 1 ? (ds.length === 7 ? 'Her gün' : dl.charAt(0).toLocaleUpperCase('tr') + dl.slice(1)) : `${e} haftada bir · ${dl}`;
+      break;
+    }
+    case 'monthly': s = (e === 1 ? 'Her ay' : `${e} ayda bir`) + ' · ' + (r.mday === -1 ? 'son gün' : r.mday + '. gün'); break;
+    case 'yearly': s = `Her yıl · ${r.day} ${MONTHS[r.month]}`; break;
+    default: s = '';
+  }
+  if (withTimes && t.times.length > 2) s += ` · günde ${t.times.length} kez`;
+  return s;
+}
+function dosesPerDay(t) {
+  const r = t.rec, e = Math.max(1, r.every || 1), n = slotsOf(t).length;
+  switch (r.type) {
+    case 'daily': return n / e;
+    case 'weekly': return n * r.days.length / 7 / e;
+    case 'monthly': return n / 30.4 / e;
+    case 'yearly': return n / 365;
+  }
+  return 0;
+}
+
+// ---------- history ----------
+const hName = m => 'h_' + S.me.id + '_' + m;
+const hv = (s, key) => { const m = S.hist[s.slice(0, 7)]; return m && m.d[s] ? m.d[s][key] : undefined; };
+const isDone = v => !!v && v !== 's';
+function setHv(s, key, val) {
+  const mk = s.slice(0, 7);
+  const m = S.hist[mk] || (S.hist[mk] = { d: {} });
+  if (val == null) { if (m.d[s]) { delete m.d[s][key]; if (!Object.keys(m.d[s]).length) delete m.d[s]; } }
+  else (m.d[s] || (m.d[s] = {}))[key] = val;
+  Store.write(hName(mk), { kind: 'hist', acct: S.me.id, month: mk, d: m.d });
+}
+
+function dayItems(s, withOverdue = true) {
+  const items = [];
+  for (const t of S.data.tasks) {
+    if (occursOn(t, s)) slotsOf(t).forEach((time, i) => items.push({ t, i, time, key: t.id + '.' + i, v: hv(s, t.id + '.' + i), date: s }));
+  }
+  const td = today();
+  if (withOverdue && s === td) {
+    for (const t of S.data.tasks) {
+      if (t.rec.type === 'once' && !t.doneOn && !t.archived && t.rec.date < td)
+        items.push({ t, i: 0, time: t.times[0] || null, key: t.id + '.0', v: undefined, date: td, overdue: true });
+    }
+  }
+  items.sort((a, b) => (b.overdue ? 1 : 0) - (a.overdue ? 1 : 0) || (a.time || '99') .localeCompare(b.time || '99') || b.t.priority - a.t.priority || a.t.created - b.t.created);
+  return items;
+}
+function dayStats(s) {
+  let exp = 0, done = 0;
+  for (const it of dayItems(s, false)) { if (it.v === 's') continue; exp++; if (isDone(it.v)) done++; }
+  return { exp, done, ratio: exp ? done / exp : 0 };
+}
+function occState(t, s) {
+  const vals = slotsOf(t).map((_, i) => hv(s, t.id + '.' + i));
+  const doneN = vals.filter(isDone).length;
+  if (vals.every(v => v === 's')) return 'skip';
+  if (vals.every(v => v)) return 'done';
+  return doneN ? 'part' : 'miss';
+}
+function taskStreak(t) {
+  if (t.rec.type === 'once') return 0;
+  const td = today(); let s = td, n = 0;
+  for (let k = 0; k < 500; k++) {
+    if (s < t.start) break;
+    if (occursOn(t, s)) {
+      const st = occState(t, s);
+      if (st === 'done') n++;
+      else if (st !== 'skip' && s !== td) break;
+    }
+    s = addDays(s, -1);
+  }
+  return n;
+}
+function bestStreak(t) {
+  if (t.rec.type === 'once') return 0;
+  const td = today(); let s = t.start < addDays(td, -730) ? addDays(td, -730) : t.start, best = 0, cur = 0;
+  while (s <= td) {
+    if (occursOn(t, s)) {
+      const st = occState(t, s);
+      if (st === 'done') { cur++; best = Math.max(best, cur); }
+      else if (st !== 'skip' && s !== td) cur = 0;
+    }
+    s = addDays(s, 1);
+  }
+  return best;
+}
+function taskRate(t, days = 30) {
+  const td = today(); let exp = 0, done = 0;
+  for (let k = 0; k < days; k++) {
+    const s = addDays(td, -k);
+    if (s < t.start || !occursOn(t, s)) continue;
+    slotsOf(t).forEach((time, i) => { const v = hv(s, t.id + '.' + i); if (v === 's') return; if (s === td && !isDone(v) && !(time && time < nowHM())) return; exp++; if (isDone(v)) done++; });
+  }
+  return exp ? done / exp : null;
+}
+function perfectStreak() {
+  const td = today(); let s = td, n = 0;
+  for (let k = 0; k < 400; k++) {
+    const st = dayStats(s);
+    if (st.exp > 0) { if (st.done >= st.exp) n++; else if (s !== td) break; }
+    s = addDays(s, -1);
+  }
+  return n;
+}
+
+// ---------- actions ----------
+function saveApp() {
+  clearTimeout(S.appTimer);
+  S.appTimer = setTimeout(() => { S.appTimer = null; Store.write('app_' + S.me.id, { kind: 'app', acct: S.me.id, ...S.data }); }, 250);
+}
+function adjustStock(t, dir) {
+  if (!t.stock.on) return;
+  t.stock.qty = Math.max(0, Math.round((t.stock.qty + dir * (t.stock.per || 1)) * 100) / 100);
+  if (dir < 0 && t.stock.qty <= t.stock.low) toast(`${t.title}: ${t.stock.qty} adet kaldı. Yenilemeyi unutma.`);
+}
+function toggleSlot(id, i, date, btn) {
+  const t = task(id); if (!t) return;
+  const key = id + '.' + i, v = hv(date, key);
+  if (isDone(v)) {
+    setHv(date, key, null);
+    if (t.rec.type === 'once') t.doneOn = null;
+    adjustStock(t, +1);
+  } else {
+    setHv(date, key, nowHM());
+    if (t.rec.type === 'once') t.doneOn = date;
+    adjustStock(t, -1);
+    feedback();
+  }
+  saveApp();
+  render();
+  if (!isDone(v)) {
+    const nb = $(`.item[data-key="${CSS.escape(key)}"][data-date="${date}"] .check`);
+    if (nb) nb.classList.add('pop');
+    const st = dayStats(date);
+    if (date === today() && st.exp && st.done === st.exp && !S.celebrated[date]) { S.celebrated[date] = 1; confetti(); toast('Bugünün tüm görevleri tamam. Harika gidiyorsun!'); }
+  }
+}
+function skipDay(id, date) {
+  const t = task(id);
+  const allSkipped = slotsOf(t).every((_, i) => hv(date, id + '.' + i) === 's');
+  slotsOf(t).forEach((_, i) => {
+    const key = id + '.' + i, v = hv(date, key);
+    if (allSkipped) setHv(date, key, null);
+    else if (!isDone(v)) setHv(date, key, 's');
+  });
+  render();
+  toast(allSkipped ? 'Atlama geri alındı.' : `${relDay(date)} için atlandı. Serin bozulmaz.`);
+}
+
+// ---------- feedback: sound, vibration, confetti ----------
+let actx = null;
+function feedback() {
+  const st = S.data.settings;
+  if (st.vibrate) try { navigator.vibrate && navigator.vibrate(18); } catch {}
+  if (st.sound) try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const t0 = actx.currentTime;
+    [[880, 0], [1320, .07]].forEach(([f, d]) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0, t0 + d); g.gain.linearRampToValueAtTime(.12, t0 + d + .01); g.gain.exponentialRampToValueAtTime(.0001, t0 + d + .16);
+      o.connect(g).connect(actx.destination); o.start(t0 + d); o.stop(t0 + d + .18);
+    });
+  } catch {}
+}
+function confetti() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const cv = $('#confetti'), ctx = cv.getContext('2d');
+  cv.hidden = false; const W = cv.width = innerWidth * devicePixelRatio, H = cv.height = innerHeight * devicePixelRatio;
+  const cs = getComputedStyle(document.documentElement);
+  const cols = [cs.getPropertyValue('--accent').trim() || '#2F55E4', '#E0565B', '#2E9E77', '#E08A23', '#9157DA'];
+  const P = Array.from({ length: 140 }, () => ({ x: W / 2 + (Math.random() - .5) * W * .3, y: H * .35, vx: (Math.random() - .5) * 22 * devicePixelRatio, vy: (-Math.random() * 18 - 6) * devicePixelRatio, w: (6 + Math.random() * 6) * devicePixelRatio, h: (8 + Math.random() * 10) * devicePixelRatio, r: Math.random() * 6, vr: (Math.random() - .5) * .4, c: cols[Math.floor(Math.random() * cols.length)] }));
+  const t0 = performance.now();
+  (function frame(t) {
+    ctx.clearRect(0, 0, W, H);
+    P.forEach(p => { p.vy += .55 * devicePixelRatio; p.vx *= .985; p.x += p.vx; p.y += p.vy; p.r += p.vr; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h * Math.abs(Math.cos(p.r * 2))); ctx.restore(); });
+    if (t - t0 < 2200) requestAnimationFrame(frame); else { ctx.clearRect(0, 0, W, H); cv.hidden = true; }
+  })(t0);
+}
+
+// ---------- theme ----------
+function applyTheme() {
+  const st = S.data ? S.data.settings : { theme: 'system', accent: 'kobalt' };
+  const a = ACCENTS.find(x => x.id === st.accent) || ACCENTS[0];
+  const root = document.documentElement;
+  root.style.setProperty('--acc-l', a.l); root.style.setProperty('--acc-d', a.d);
+  let fs = st.fontSize; if (!fs) { try { fs = localStorage.getItem(LP + 'fs'); } catch {} }
+  root.style.fontSize = ({ normal: 17, buyuk: 19, cokbuyuk: 21 }[fs] || 17) + 'px';
+  if (st.theme === 'light' || st.theme === 'dark') root.setAttribute('data-theme', st.theme);
+  else if (S.hostTheme) root.setAttribute('data-theme', S.hostTheme);
+  else root.removeAttribute('data-theme');
+}
+
+// ---------- toast ----------
+function toast(msg, action) {
+  const box = $('#toasts');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `<span class="grow"></span>${action ? `<button type="button">${esc(action.label)}</button>` : ''}`;
+  el.firstChild.textContent = msg;
+  if (action) el.querySelector('button').onclick = () => { action.fn(); el.remove(); };
+  box.appendChild(el);
+  while (box.children.length > 3) box.firstChild.remove();
+  setTimeout(() => { el.style.transition = 'opacity .3s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, action ? 5200 : 3200);
+}
+
+// ============================================================
+//   RENDER: splash & auth
+// ============================================================
+function renderSplash() {
+  $('#app').innerHTML = `<div class="splash"><div class="mark">Ritim</div><div class="dots"><span></span><span></span><span></span><span></span><span></span></div></div>`;
+}
+const auth = { tab: 'login', err: '', busy: false };
+function renderAuth() {
+  applyTheme();
+  const recents = lastUsers().filter(u => findUser(u));
+  const heights = [100, 85, 100, 60, 100, 35, 10];
+  const cloud = S.mode === 'cloud';
+  const form = auth.tab === 'login' ? `
+      <div class="field"><label for="a-user">Kullanıcı adı</label><input class="inp" id="a-user" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ornek: ayse.k"></div>
+      <div class="field"><label for="a-pw">Şifre</label><div class="pw"><input class="inp" id="a-pw" type="password" autocomplete="current-password" placeholder="Şifren"><button type="button" data-act="pw-eye" aria-label="Şifreyi göster">${ic('eye')}</button></div></div>
+      <div class="row between wrap"><label class="check-row"><input type="checkbox" id="a-rem" checked> Beni hatırla</label><button type="button" class="link" data-act="auth-tab" data-v="reset">Şifremi unuttum</button></div>
+      <div class="err" id="a-err">${esc(auth.err)}</div>
+      <button class="btn btn-primary btn-block" type="submit">${auth.busy ? 'Giriş yapılıyor…' : 'Giriş yap'}</button>`
+    : auth.tab === 'register' ? `
+      <div class="field"><label for="a-name">Adın</label><input class="inp" id="a-name" autocomplete="given-name" placeholder="Ekranda görünecek ad"></div>
+      <div class="field"><label for="a-user">Kullanıcı adı</label><input class="inp" id="a-user" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="küçük harf, rakam, . veya _"></div>
+      <div class="field"><label for="a-pw">Şifre</label><div class="pw"><input class="inp" id="a-pw" type="password" autocomplete="new-password" placeholder="En az 6 karakter"><button type="button" data-act="pw-eye" aria-label="Şifreyi göster">${ic('eye')}</button></div></div>
+      <div class="field"><label for="a-pw2">Şifre tekrar</label><input class="inp" id="a-pw2" type="password" autocomplete="new-password" placeholder="Şifreni tekrar yaz"></div>
+      <label class="check-row"><input type="checkbox" id="a-rem" checked> Beni hatırla</label>
+      <div class="err" id="a-err">${esc(auth.err)}</div>
+      <button class="btn btn-primary btn-block" type="submit">${auth.busy ? 'Hesap oluşturuluyor…' : 'Hesap oluştur'}</button>`
+      : `
+      <p class="note" style="margin:0">${ic('key')}<span>Kayıt olurken verilen kurtarma koduyla yeni şifre belirleyebilirsin.</span></p>
+      <div class="field"><label for="a-user">Kullanıcı adı</label><input class="inp" id="a-user" autocapitalize="none" spellcheck="false"></div>
+      <div class="field"><label for="a-code">Kurtarma kodu</label><input class="inp" id="a-code" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX" style="font-family:var(--f-mono)"></div>
+      <div class="field"><label for="a-pw">Yeni şifre</label><input class="inp" id="a-pw" type="password" autocomplete="new-password"></div>
+      <div class="field"><label for="a-pw2">Yeni şifre tekrar</label><input class="inp" id="a-pw2" type="password" autocomplete="new-password"></div>
+      <div class="err" id="a-err">${esc(auth.err)}</div>
+      <button class="btn btn-primary btn-block" type="submit">${auth.busy ? 'Kaydediliyor…' : 'Şifreyi yenile ve giriş yap'}</button>
+      <button type="button" class="link" data-act="auth-tab" data-v="login">Girişe dön</button>`;
+  $('#app').innerHTML = `
+  <div class="auth"><div class="auth-in">
+    <div class="brand">
+      <div class="mark">Ritim<em>.</em></div>
+      <p>İlaçların, alışkanlıkların ve tekrar eden işlerin her gün aynı yerde seni bekler.</p>
+    </div>
+    <div class="pillbox-demo" aria-hidden="true">
+      ${WEEK.map((d, k) => `<div><i style="--h:${heights[k]}%;--d:${k * 90}ms"></i><b>${DAY3[d]}</b></div>`).join('')}
+    </div>
+    <form class="card auth-card" id="auth-form" novalidate>
+      ${auth.tab !== 'reset' ? `<div class="seg" role="group" aria-label="Giriş türü">
+        <button type="button" data-act="auth-tab" data-v="login" aria-pressed="${auth.tab === 'login'}">Giriş yap</button>
+        <button type="button" data-act="auth-tab" data-v="register" aria-pressed="${auth.tab === 'register'}">Hesap oluştur</button>
+      </div>` : `<h2 style="font-size:1.33rem">Şifreni yenile</h2>`}
+      ${auth.tab === 'login' && recents.length ? `<div class="quick-acc">${recents.map(u => { const a = findUser(u); return `<button type="button" data-act="pick-user" data-v="${esc(u)}"><span class="avatar sm" style="--c:${a.color}">${esc(a.name.charAt(0).toLocaleUpperCase('tr'))}</span>@${esc(u)}</button>`; }).join('')}</div>` : ''}
+      ${form}
+    </form>
+    <p class="note">${ic(cloud ? 'cloud' : 'device')}<span>${cloud
+      ? 'Verilerin claude.ai hesabına özel olarak kaydedilir; telefondan ve bilgisayardan aynı hesapla açtığında senkron olur.'
+      : 'Verilerin bu cihazda saklanır. Ayarlar’dan yedek alıp başka cihaza taşıyabilirsin.'}</span></p>
+  </div></div>`;
+  const first = $('#a-user');
+  if (auth.tab === 'login' && recents.length && first && !first.value) first.value = recents[0];
+  $('#auth-form').addEventListener('submit', onAuthSubmit);
+}
+async function onAuthSubmit(e) {
+  e.preventDefault();
+  if (auth.busy) return;
+  const v = id => ($('#' + id) || {}).value || '';
+  const rem = ($('#a-rem') || { checked: true }).checked;
+  const errEl = $('#a-err'), btn = $('#auth-form [type=submit]');
+  auth.busy = true; btn.disabled = true; btn.style.opacity = .7;
+  try {
+    if (auth.tab === 'login') {
+      const acc = await doLogin(v('a-user'), v('a-pw'));
+      writeSession(acc.id, rem); pushLastUser(acc.username);
+      await enter(acc);
+    } else if (auth.tab === 'register') {
+      const { acc, code } = await doRegister({ name: v('a-name'), username: v('a-user'), pw: v('a-pw'), pw2: v('a-pw2') });
+      writeSession(acc.id, rem); pushLastUser(acc.username);
+      await enter(acc, true);
+      showCodeModal(code, true);
+    } else {
+      const acc = await doReset(v('a-user'), v('a-code'), v('a-pw'), v('a-pw2'));
+      writeSession(acc.id, true); pushLastUser(acc.username);
+      await enter(acc);
+      toast('Şifren yenilendi.');
+    }
+    auth.err = '';
+  } catch (err) {
+    auth.err = typeof err === 'string' ? err : 'Bir şeyler ters gitti. Tekrar dene.';
+    if (typeof err !== 'string') console.error(err);
+    if (errEl && document.body.contains(errEl)) errEl.textContent = auth.err;
+  } finally {
+    auth.busy = false;
+    if (document.body.contains(btn)) { btn.disabled = false; btn.style.opacity = ''; }
+  }
+}
+
+// ============================================================
+//   ENTER APP
+// ============================================================
+async function enter(acc, fresh = false) {
+  S.unsub.forEach(u => { try { u(); } catch {} }); S.unsub = [];
+  S.me = acc;
+  let app = await Store.get('app_' + acc.id);
+  if (!app) { app = defaultApp(); await Store.raw('app_' + acc.id, { kind: 'app', acct: acc.id, ...app }); }
+  S.data = sanitizeApp(app);
+  S.hist = {};
+  await new Promise(res => {
+    let done = false; const fin = () => { if (!done) { done = true; res(); } };
+    S.unsub.push(Store.watchHist(acc.id, docs => {
+      let changed = false;
+      for (const [name, doc] of Object.entries(docs)) {
+        if (!doc || !doc.month) continue;
+        const prev = S.hist[doc.month];
+        if (!prev || JSON.stringify(prev.d) !== JSON.stringify(doc.d)) { S.hist[doc.month] = { d: doc.d || {} }; changed = true; }
+      }
+      if (done && changed && S.me) render();
+      fin();
+    }));
+    setTimeout(fin, 4000);
+  });
+  S.unsub.push(Store.watch('app_' + acc.id, doc => {
+    if (!doc || S.appTimer) return;
+    const next = sanitizeApp(doc);
+    if (JSON.stringify(next) === JSON.stringify(S.data)) return;
+    S.data = next; applyTheme(); render();
+  }));
+  S.view = 'today'; S.sel = today(); S.calMonth = today().slice(0, 7); S.calSel = today();
+  applyTheme();
+  renderShell();
+  render();
+}
+function sanitizeApp(app) {
+  const d = defaultApp();
+  const out = {
+    tasks: Array.isArray(app.tasks) ? app.tasks.map(normTask) : [],
+    cats: Array.isArray(app.cats) && app.cats.length ? app.cats : d.cats,
+    settings: { ...d.settings, ...(app.settings || {}) },
+  };
+  return out;
+}
+
+// ============================================================
+//   RENDER: app shell
+// ============================================================
+function renderShell() {
+  $('#app').innerHTML = `
+  <div class="shell">
+    <header class="top"><div style="min-width:0"><div class="eyebrow" id="h-eye"></div><h1 id="h-title"></h1></div>
+      <button class="avatar" id="h-av" data-act="settings" aria-label="Profil ve ayarlar"></button></header>
+    <main class="view" id="view"></main>
+  </div>
+  <nav class="tabbar" aria-label="Ana menü"><div class="tabbar-in">
+    <button class="tab" data-act="nav" data-v="today">${ic('sun')}Bugün</button>
+    <button class="tab" data-act="nav" data-v="calendar">${ic('calendar')}Takvim</button>
+    <button class="fab-wrap" data-act="add" aria-label="Yeni görev ekle"><span class="fab">${ic('plus')}</span>Ekle</button>
+    <button class="tab" data-act="nav" data-v="tasks">${ic('list')}Görevler</button>
+    <button class="tab" data-act="nav" data-v="stats">${ic('chart')}İlerleme</button>
+  </div></nav>`;
+}
+function greeting() {
+  const h = new Date().getHours();
+  return h < 5 ? 'İyi geceler' : h < 12 ? 'Günaydın' : h < 18 ? 'İyi günler' : h < 22 ? 'İyi akşamlar' : 'İyi geceler';
+}
+function render() {
+  if (!S.me || !$('#view')) return;
+  const av = $('#h-av');
+  av.style.setProperty('--c', S.me.color); av.textContent = S.me.name.charAt(0).toLocaleUpperCase('tr');
+  $$('.tab').forEach(b => b.setAttribute('aria-current', b.dataset.v === S.view ? 'page' : 'false'));
+  const first = S.me.name.split(' ')[0];
+  const td = today(), d = parse(td);
+  const heads = {
+    today: [`${DAYS[d.getDay()]}, ${fmtDate(td)}`, `${greeting()}, ${first}`],
+    calendar: ['Geçmiş ve gelecek', 'Takvim'],
+    tasks: [`${S.data.tasks.filter(t => !t.archived).length} görev`, 'Görevler'],
+    stats: ['Son 30 gün', 'İlerleme'],
+  };
+  $('#h-eye').textContent = heads[S.view][0];
+  $('#h-title').textContent = heads[S.view][1];
+  const v = $('#view');
+  v.innerHTML = S.view === 'today' ? viewToday() : S.view === 'calendar' ? viewCalendar() : S.view === 'tasks' ? viewTasks() : viewStats();
+}
+
+// ---------- shared item row ----------
+function itemRow(it, opts = {}) {
+  const t = it.t, c = cat(t.cat), done = isDone(it.v), skip = it.v === 's';
+  const td = today();
+  let now = false, late = false;
+  if (!done && !skip && it.time && it.date === td) {
+    const [h, m] = it.time.split(':').map(Number), n = new Date(), mins = n.getHours() * 60 + n.getMinutes();
+    now = Math.abs(mins - (h * 60 + m)) <= 45;
+    late = !now && mins > h * 60 + m;
+  }
+  const missed = !done && !skip && !it.overdue && it.date < td;
+  const streak = opts.noStreak ? 0 : taskStreak(t);
+  const meta = [];
+  if (t.priority) meta.push(`<span class="m-star">${ic('star')}Önemli</span>`);
+  if (it.overdue) meta.push(`<span class="time">Gecikti: ${relDay(t.rec.date)}</span>`);
+  else if (it.time) meta.push(`<span class="time">${it.time}</span>`);
+  if (now) meta.push(`<span style="color:var(--accent);font-weight:800">Şimdi zamanı</span>`);
+  if (late) meta.push(`<span class="m-late">Saati geçti, yapılmadı</span>`);
+  if (missed) meta.push(`<span class="m-late">Yapılmadı</span>`);
+  if (t.times.length > 1 && !it.overdue) meta.push(`<span>${it.i + 1}. kez</span>`);
+  if (done && it.v && it.v !== '1') meta.push(`<span class="m-done">Saat ${esc(it.v)}</span>`);
+  if (streak > 1) meta.push(`<span class="m-flame">${ic('flame')}${streak} gün</span>`);
+  if (t.stock.on) meta.push(`<span class="${t.stock.qty <= t.stock.low ? 'm-low' : ''}">${ic('box')}${t.stock.qty} adet</span>`);
+  if (skip) meta.push(`<span>Atlandı</span>`);
+  const data = `data-id="${t.id}" data-i="${it.i}" data-date="${it.date}"`;
+  return `<div class="item ${done ? 'is-done' : ''} ${skip ? 'is-skip' : ''} ${now ? 'is-now' : ''} ${late || missed ? 'is-late' : ''} ${it.overdue ? 'overdue' : ''} ${t.priority ? 'is-star' : ''}" data-act="detail" data-key="${esc(it.key)}" ${data}>
+    <button class="check" style="--c:${c.color}" data-act="toggle" ${data} aria-label="${esc(t.title)}: ${done ? 'yapılmadı olarak geri al' : 'yapıldı olarak işaretle'}" aria-pressed="${done}">${ic('check')}</button>
+    <div class="item-main"><div class="item-title">${esc(t.title)}</div><div class="item-meta">${meta.join('')}</div></div>
+    <button class="do-btn ${done ? 'on' : ''}" data-act="toggle" ${data} aria-label="${esc(t.title)}: ${done ? 'yapılmadı olarak geri al' : 'yapıldı olarak işaretle'}">${done ? `${ic('check')}Yapıldı` : 'Yaptım'}</button>
+  </div>`;
+}
+
+// ---------- TODAY ----------
+function viewToday() {
+  const td = today(), sel = S.sel;
+  const mon = mondayOf(sel);
+  const strip = WEEK.map((_, k) => {
+    const s = addDays(mon, k), st = dayStats(s), d = parse(s);
+    const h = s <= td && st.exp ? Math.round(st.ratio * 100) : 0;
+    return `<button class="wd ${s === td ? 'today' : ''} ${st.exp && st.done === st.exp && s <= td ? 'full' : ''}" style="--h:${h}%" data-act="sel-day" data-v="${s}" aria-pressed="${s === sel}" aria-label="${DAYS[d.getDay()]} ${fmtDate(s)}, ${st.done}/${st.exp}">
+      <span class="lvl"></span><span class="d">${DAY3[d.getDay()]}</span><span class="n">${d.getDate()}</span><span class="pip ${st.exp ? '' : 'off'}"></span></button>`;
+  }).join('');
+  const items = dayItems(sel);
+  const st = dayStats(sel);
+  const pct = st.exp ? Math.round(st.ratio * 100) : 0;
+  const C = 2 * Math.PI * 42;
+  const ps = perfectStreak();
+  const isToday = sel === td;
+  const low = S.data.tasks.filter(t => t.stock.on && !t.archived && !t.paused && t.stock.qty <= t.stock.low);
+  const remain = st.exp - st.done;
+  const heroTitle = !st.exp ? (isToday ? 'Bugün boş bir gün' : 'Bu güne planlı görev yok')
+    : remain === 0 ? (isToday ? 'Bugün tamamlandı' : 'Bu gün tamamlanmış')
+      : isToday ? `${remain} görev kaldı` : sel < td ? `${remain} görev yapılmamış` : `${st.exp} görev planlı`;
+  const nextIt = isToday ? items.find(i => !i.overdue && !isDone(i.v) && i.v !== 's' && i.time && i.time >= nowHM()) : null;
+  const heroSub = !st.exp ? 'Aşağıdaki Ekle düğmesiyle görev ekleyebilirsin.'
+    : nextIt ? `Sıradaki: ${nextIt.t.title} · ${nextIt.time}` : `${st.done} / ${st.exp} tamamlandı`;
+
+  let body;
+  if (!S.data.tasks.length) {
+    body = `<div class="card empty">
+      <span class="cat-ic lg" style="--c:var(--accent)">${ic('repeat')}</span>
+      <h3>İlk ritmini oluştur</h3>
+      <p>Bir kez ekle, her gün, hafta ya da ay kendiliğinden gelsin. Bir şablonla başla:</p>
+      <div class="tpl-grid">${TEMPLATES.map((tp, k) => `<button class="tpl" data-act="tpl" data-v="${k}">${ic(tp.icon)}${esc(tp.label)}</button>`).join('')}</div>
+      <button class="btn btn-ghost btn-sm" data-act="sample">Örnek görevlerle dene</button>
+    </div>`;
+  } else if (!items.length) {
+    body = `<div class="card empty"><span class="cat-ic lg" style="--c:var(--ok)">${ic('sun')}</span><h3>${isToday ? 'Bugün için görev yok' : fmtDate(sel) + ' boş'}</h3><p>${isToday ? 'Keyfini çıkar. Yarın neler var görmek için üstteki günlere dokun.' : 'Bu tarihe denk gelen tekrarlayan görev bulunmuyor.'}</p></div>`;
+  } else {
+    const hide = S.data.settings.hideDone;
+    const groups = [['overdue', 'Gecikmiş', 'alert'], ['sabah', 'Sabah', 'sun'], ['ogle', 'Öğle', 'sun'], ['aksam', 'Akşam', 'moon'], ['gece', 'Gece', 'moon'], ['gun', 'Gün içinde', 'clock']];
+    const gOf = it => { if (it.overdue) return 'overdue'; if (!it.time) return 'gun'; const h = +it.time.slice(0, 2); return h < 5 ? 'gece' : h < 12 ? 'sabah' : h < 17 ? 'ogle' : h < 21 ? 'aksam' : 'gece'; };
+    let doneHidden = 0;
+    body = groups.map(([g, label, gic]) => {
+      let its = items.filter(it => gOf(it) === g);
+      if (!its.length) return '';
+      const dn = its.filter(it => isDone(it.v)).length;
+      if (hide) { doneHidden += dn; its = its.filter(it => !isDone(it.v)); }
+      if (!its.length) return '';
+      return `<section class="sec"><div class="sec-h"><h3>${ic(gic)}${label}</h3><span class="tnum">${dn}/${its.length + (hide ? dn : 0)}</span></div><div class="list">${its.map(it => itemRow(it)).join('')}</div></section>`;
+    }).join('');
+    body += `<button class="done-toggle" data-act="toggle-hide">${ic(hide ? 'eye' : 'check')}${hide ? (doneHidden ? `Tamamlanan ${doneHidden} görevi göster` : 'Tamamlananları göster') : 'Tamamlananları gizle'}</button>`;
+  }
+
+  return `<div class="stack">
+    <div class="week">
+      <button class="week-nav" data-act="week" data-v="-7" aria-label="Önceki hafta">${ic('left')}</button>
+      <div class="week-days">${strip}</div>
+      <button class="week-nav" data-act="week" data-v="7" aria-label="Sonraki hafta">${ic('right')}</button>
+    </div>
+    ${!isToday ? `<div class="row between"><span class="eyebrow">${DAYS[parse(sel).getDay()]}, ${fmtDate(sel)}</span><button class="link" data-act="sel-day" data-v="${td}">Bugüne dön</button></div>` : ''}
+    <div class="card hero">
+      <div class="ring" role="img" aria-label="%${pct} tamamlandı"><svg viewBox="0 0 100 100"><circle class="bgc" cx="50" cy="50" r="42"/><circle class="fgc" cx="50" cy="50" r="42" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - (st.exp ? st.ratio : 0))}"/></svg><div class="val tnum">${pct}<small>%</small></div></div>
+      <div style="min-width:0"><h2>${esc(heroTitle)}</h2><p>${esc(heroSub)}</p>
+        <div class="badges">${ps > 0 ? `<span class="badge flame">${ic('flame')}${ps} gündür hepsi tamam</span>` : ''}${st.exp ? `<span class="badge tnum">${st.done} / ${st.exp} yapıldı</span>` : ''}</div>
+      </div>
+    </div>
+    ${low.length && isToday ? `<div class="alert" role="button" tabindex="0" data-act="detail" data-id="${low[0].id}">${ic('alert')}<div><b>Stok azalıyor:</b> ${low.map(t => `${esc(t.title)} (${t.stock.qty})`).join(', ')}</div></div>` : ''}
+    ${body}
+  </div>`;
+}
+
+// ---------- CALENDAR ----------
+function viewCalendar() {
+  const [y, m] = S.calMonth.split('-').map(Number);
+  const first = `${y}-${pad(m)}-01`;
+  const start = mondayOf(first);
+  const td = today();
+  let cells = '';
+  for (let k = 0; k < 42; k++) {
+    const s = addDays(start, k), d = parse(s);
+    if (k >= 35 && d.getMonth() !== m - 1) break;
+    const st = dayStats(s), out = d.getMonth() !== m - 1;
+    const past = s <= td;
+    const h = past && st.exp ? Math.round(st.ratio * 100) : 0;
+    const dots = !past && st.exp ? `<span class="cnt">${'<i></i>'.repeat(Math.min(3, st.exp))}</span>` : '';
+    cells += `<button class="cd ${out ? 'out' : ''} ${s === td ? 'today' : ''} ${past && st.exp && st.done === st.exp ? 'full' : ''}" style="--h:${h}%" data-act="cal-day" data-v="${s}" aria-pressed="${s === S.calSel}" aria-label="${fmtDate(s)}: ${st.done}/${st.exp}"><span class="f"></span>${d.getDate()}${dots}</button>`;
+  }
+  const sel = S.calSel, items = dayItems(sel, false), st = dayStats(sel);
+  const upcoming = [];
+  for (let k = 1; k <= 7; k++) {
+    const s = addDays(td, k), n = dayItems(s, false).length;
+    if (n) upcoming.push(`<div><span>${relDay(s)}${relDay(s) !== fmtShort(s) ? ` <span style="color:var(--faint)">· ${fmtShort(s)}</span>` : ''}</span><span>${n} görev</span></div>`);
+  }
+  return `<div class="stack">
+    <div class="card cal">
+      <div class="cal-h">
+        <button class="icon-btn" data-act="cal-month" data-v="-1" aria-label="Önceki ay">${ic('left')}</button>
+        <h2>${MONTHS[m - 1]} <span style="color:var(--muted);font-weight:600">${y}</span></h2>
+        <button class="icon-btn" data-act="cal-month" data-v="1" aria-label="Sonraki ay">${ic('right')}</button>
+      </div>
+      <div class="cal-grid">${WEEK.map(d => `<div class="cal-dow">${DAY3[d]}</div>`).join('')}${cells}</div>
+      <div class="legend"><span><i style="background:color-mix(in srgb,var(--accent) 38%,transparent)"></i>Hepsi tamam</span><span><i style="background:linear-gradient(to top,color-mix(in srgb,var(--accent) 22%,transparent) 50%,var(--surface-2) 50%)"></i>Kısmen</span><span><i style="box-shadow:inset 0 0 0 2px var(--accent)"></i>Bugün</span></div>
+    </div>
+    <section class="sec">
+      <div class="sec-h"><h3>${relDay(sel)}${relDay(sel) !== fmtShort(sel) ? ' · ' + fmtShort(sel) : ''}</h3><span class="tnum">${st.done}/${st.exp}</span></div>
+      ${items.length ? `<div class="list">${items.map(it => itemRow(it)).join('')}</div>` : `<div class="card empty" style="padding:20px"><p>Bu güne denk gelen görev yok.</p></div>`}
+    </section>
+    ${upcoming.length ? `<section class="sec"><div class="sec-h"><h3>Önümüzdeki 7 gün</h3></div><div class="card panel next-list">${upcoming.join('')}</div></section>` : ''}
+  </div>`;
+}
+
+// ---------- TASKS ----------
+function viewTasks() {
+  return `<div class="stack" style="gap:14px">
+    <div class="search">${ic('search')}<input class="inp" id="t-search" type="search" placeholder="Görevlerde ara" value="${esc(S.q)}" aria-label="Görevlerde ara"></div>
+    <div id="t-list" class="stack" style="gap:14px">${taskListHTML()}</div>
+  </div>`;
+}
+function taskListHTML() {
+  const all = S.data.tasks;
+  const counts = {
+    active: all.filter(t => !t.archived && !t.paused && !(t.rec.type === 'once' && t.doneOn)).length,
+    paused: all.filter(t => t.paused && !t.archived).length,
+    done: all.filter(t => t.rec.type === 'once' && t.doneOn && !t.archived).length,
+    archived: all.filter(t => t.archived).length,
+    star: all.filter(t => t.priority && !t.archived).length,
+  };
+  const chips = [['active', 'Aktif'], ['star', '★ Önemli'], ...S.data.cats.map(c => ['cat:' + c.id, c.name, c.color]), ['paused', 'Duraklatılan'], ['done', 'Tamamlanan'], ['archived', 'Arşiv']];
+  let list = all.filter(t => {
+    const f = S.filter;
+    if (f === 'active') return !t.archived && !t.paused && !(t.rec.type === 'once' && t.doneOn);
+    if (f === 'star') return t.priority && !t.archived;
+    if (f === 'paused') return t.paused && !t.archived;
+    if (f === 'done') return t.rec.type === 'once' && t.doneOn && !t.archived;
+    if (f === 'archived') return t.archived;
+    if (f.startsWith('cat:')) return t.cat === f.slice(4) && !t.archived;
+    return true;
+  });
+  const q = S.q.trim().toLocaleLowerCase('tr');
+  if (q) list = list.filter(t => (t.title + ' ' + t.note).toLocaleLowerCase('tr').includes(q));
+  const td = today();
+  const NX = new Map(list.map(t => [t.id, nextOcc(t)]));
+  list.sort((a, b) => (NX.get(a.id) || '9999').localeCompare(NX.get(b.id) || '9999') || (a.times[0] || '99').localeCompare(b.times[0] || '99'));
+  const rows = list.map(t => {
+    const c = cat(t.cat), nx = NX.get(t.id), streak = taskStreak(t);
+    const meta = [`<span>${ic('repeat')}${esc(recLabel(t))}</span>`];
+    if (t.times.length) meta.push(`<span class="time">${t.times.slice(0, 3).join(' · ')}${t.times.length > 3 ? ' …' : ''}</span>`);
+    if (t.archived) meta.push(`<span class="paused-tag">Arşivde</span>`);
+    else if (t.paused) meta.push(`<span class="paused-tag">Duraklatıldı</span>`);
+    else if (t.rec.type === 'once' && t.doneOn) meta.push(`<span>${ic('check')}${fmtShort(t.doneOn)}</span>`);
+    else if (nx) meta.push(`<span class="next">Sonraki: ${relDay(nx)}</span>`);
+    else meta.push(`<span>Bitti</span>`);
+    if (streak > 1) meta.push(`<span class="m-flame">${ic('flame')}${streak}</span>`);
+    if (t.stock.on) meta.push(`<span class="${t.stock.qty <= t.stock.low ? 'm-low' : ''}">${ic('box')}${t.stock.qty} adet</span>`);
+    return `<div class="item tcard" data-act="detail" data-id="${t.id}" data-date="${td}">
+      <span class="cat-ic" style="--c:${c.color}">${ic(c.icon)}</span>
+      <div class="item-main"><div class="item-title">${esc(t.title)}${t.priority ? `<span class="m-star" style="font-size:.85rem;display:inline-flex;gap:.2rem;align-items:center">${ic('star')}Önemli</span>` : ''}</div><div class="item-meta">${meta.join('')}</div></div>
+      ${ic('right')}
+    </div>`;
+  }).join('');
+  return `
+    <div class="chips" role="group" aria-label="Filtre">${chips.map(([k, l, col]) => {
+      const n = k.startsWith('cat:') ? all.filter(t => t.cat === k.slice(4) && !t.archived).length : counts[k];
+      return `<button class="chip ${col ? 'chip-c' : ''}" ${col ? `style="--c:${col}"` : ''} data-act="filter" data-v="${k}" aria-pressed="${S.filter === k}">${col ? '<i></i>' : ''}${esc(l)} <span class="ct">${n}</span></button>`;
+    }).join('')}</div>
+    ${rows ? `<div class="list">${rows}</div>` : `<div class="card empty"><span class="cat-ic lg" style="--c:var(--accent)">${ic(q ? 'search' : 'list')}</span><h3>${q ? 'Sonuç bulunamadı' : 'Burada görev yok'}</h3><p>${q ? `“${esc(S.q)}” ile eşleşen görev yok.` : 'Yeni görev eklemek için alttaki artı düğmesine dokun.'}</p>${!q ? `<button class="btn btn-primary btn-sm" data-act="add">${ic('plus')}Görev ekle</button>` : ''}</div>`}`;
+}
+
+// ---------- STATS ----------
+function viewStats() {
+  const td = today();
+  if (!S.data.tasks.length) return `<div class="card empty"><span class="cat-ic lg" style="--c:var(--accent)">${ic('chart')}</span><h3>Henüz veri yok</h3><p>Görev ekleyip tamamladıkça seri, oran ve ısı haritası burada belirir.</p><button class="btn btn-primary btn-sm" data-act="add">${ic('plus')}İlk görevini ekle</button></div>`;
+  const hm = nowHM();
+  const range = n => { let e = 0, d = 0; for (let k = 0; k < n; k++) { const s = addDays(td, -k); if (k === 0) { dayItems(s, false).forEach(x => { if (isDone(x.v)) { e++; d++; } else if (x.v !== 's' && x.time && x.time < hm) e++; }); continue; } const st = dayStats(s); e += st.exp; d += st.done; } return e ? Math.round(d / e * 100) : null; };
+  const tStat = dayStats(td);
+  const r7 = range(7), r30 = range(30);
+  const ps = perfectStreak();
+  let totalDone = 0; Object.values(S.hist).forEach(m => Object.values(m.d).forEach(day => Object.values(day).forEach(v => { if (isDone(v)) totalDone++; })));
+  // 14 day bars
+  const days14 = Array.from({ length: 14 }, (_, k) => addDays(td, k - 13));
+  const bars = days14.map(s => { const st = dayStats(s); const p = st.exp ? Math.round(st.ratio * 100) : 0; return `<div class="bar ${st.exp ? '' : 'none'} ${s === td ? 'today' : ''}" title="${fmtDate(s)}: ${st.exp ? `%${p} (${st.done}/${st.exp})` : 'görev yok'}"><i style="height:${st.exp ? Math.max(3, p) : 3}%"></i></div>`; }).join('');
+  const barX = days14.map((s, k) => `<span>${k % 2 === 1 || s === td ? (s === td ? 'Bgn' : parse(s).getDate()) : ''}</span>`).join('');
+  // heatmap 18 weeks
+  const weeks = 18, hStart = addDays(mondayOf(td), -7 * (weeks - 1));
+  let heat = '';
+  for (let k = 0; k < weeks * 7; k++) {
+    const s = addDays(hStart, k);
+    if (s > td) { heat += `<i class="fut"></i>`; continue; }
+    const st = dayStats(s);
+    const l = !st.exp ? 0 : st.ratio === 0 ? 0 : st.ratio < .34 ? 1 : st.ratio < .67 ? 2 : st.ratio < 1 ? 3 : 4;
+    heat += `<i class="l${l}" title="${fmtDate(s)}: ${st.exp ? `${st.done}/${st.exp}` : 'görev yok'}"></i>`;
+  }
+  // per-task
+  const rates = S.data.tasks.filter(t => !t.archived && t.rec.type !== 'once').map(t => ({ t, r: taskRate(t), s: taskStreak(t) })).filter(x => x.r !== null).sort((a, b) => b.r - a.r);
+  // weekday performance (last 8 weeks)
+  const wd = WEEK.map(() => ({ e: 0, d: 0 }));
+  for (let k = 1; k <= 56; k++) { const s = addDays(td, -k), st = dayStats(s), i = WEEK.indexOf(parse(s).getDay()); wd[i].e += st.exp; wd[i].d += st.done; }
+  const wdp = wd.map(x => x.e ? Math.round(x.d / x.e * 100) : null);
+  const valid = wdp.map((p, i) => [p, i]).filter(x => x[0] !== null);
+  const best = valid.length ? valid.reduce((a, b) => b[0] > a[0] ? b : a) : null;
+  const worst = valid.length ? valid.reduce((a, b) => b[0] < a[0] ? b : a) : null;
+  // categories (30 days done)
+  const catCount = {};
+  for (let k = 0; k < 30; k++) { const s = addDays(td, -k); dayItems(s, false).forEach(it => { if (isDone(it.v)) catCount[it.t.cat] = (catCount[it.t.cat] || 0) + 1; }); }
+  const catRows = Object.entries(catCount).sort((a, b) => b[1] - a[1]);
+  const catMax = catRows.length ? catRows[0][1] : 1;
+
+  return `<div class="stack">
+    <div class="tiles">
+      <div class="card tile"><span class="k">Bugün</span><span class="v tnum">${tStat.exp ? Math.round(tStat.ratio * 100) : 0}<small>%</small></span><span class="k" style="font-weight:600">${tStat.done}/${tStat.exp} görev</span></div>
+      <div class="card tile"><span class="k">Kusursuz seri</span><span class="v tnum" style="color:var(--flame)">${ps}<small> gün</small></span><span class="k" style="font-weight:600">her şey tamam</span></div>
+      <div class="card tile"><span class="k">Son 7 gün</span><span class="v tnum">${r7 ?? '–'}<small>${r7 != null ? '%' : ''}</small></span><span class="k" style="font-weight:600">tamamlama oranı</span></div>
+      <div class="card tile"><span class="k">Son 30 gün</span><span class="v tnum">${r30 ?? '–'}<small>${r30 != null ? '%' : ''}</small></span><span class="k" style="font-weight:600">toplam ${totalDone} işaret</span></div>
+    </div>
+    <div class="card panel">
+      <div class="panel-h"><h3>Son 14 gün</h3><span>günlük tamamlama %</span></div>
+      <div class="bars"><div class="grid-l" style="top:0">100</div><div class="grid-l" style="top:50%">50</div>${bars}</div>
+      <div class="bar-x">${barX}</div>
+    </div>
+    <div class="card panel">
+      <div class="panel-h"><h3>Ritim haritası</h3><span>son ${weeks} hafta</span></div>
+      <div class="heat-wrap"><div class="heat-dow">${WEEK.map((d, i) => `<span>${i % 2 === 0 ? DAY3[d] : ''}</span>`).join('')}</div><div class="heat" style="grid-template-columns:repeat(${weeks},1fr)">${heat}</div></div>
+      <div class="legend" style="margin-top:0"><span>Az</span><span><i class="" style="background:var(--surface-2)"></i><i style="background:color-mix(in srgb,var(--accent) 28%,var(--surface-2))"></i><i style="background:color-mix(in srgb,var(--accent) 52%,var(--surface-2))"></i><i style="background:color-mix(in srgb,var(--accent) 76%,var(--surface-2))"></i><i style="background:var(--accent)"></i></span><span>Tam</span></div>
+    </div>
+    ${valid.length ? `<div class="card panel">
+      <div class="panel-h"><h3>Haftanın günleri</h3><span>son 8 hafta</span></div>
+      <div class="dow-bars">${wdp.map((p, i) => `<div class="bar ${p === null ? 'none' : ''}" title="${DAYS[WEEK[i]]}: ${p === null ? 'görev yok' : '%' + p}"><i style="height:${p === null ? 3 : Math.max(3, p * .75)}%;max-width:28px;${best && i === best[1] ? '' : 'opacity:.55'}"></i><span>${DAY3[WEEK[i]]}</span></div>`).join('')}</div>
+      ${best && worst && best[1] !== worst[1] ? `<p class="insight" style="margin:0">En düzenli günün <b>${DAYS[WEEK[best[1]]]}</b> (%${best[0]}). En çok aksayan gün <b>${DAYS[WEEK[worst[1]]]}</b> (%${worst[0]}).</p>` : ''}
+    </div>` : ''}
+    ${rates.length ? `<div class="card panel">
+      <div class="panel-h"><h3>Görev bazında</h3><span>30 günlük oran</span></div>
+      <div class="rates">${rates.map(x => { const c = cat(x.t.cat); return `<div class="rate" data-act="detail" data-id="${x.t.id}" data-date="${td}" style="cursor:pointer"><span class="cat-ic" style="--c:${c.color}">${ic(c.icon)}</span><div style="min-width:0"><div class="rate-name">${esc(x.t.title)}</div><div class="rate-bar" style="--c:${c.color}"><i style="width:${Math.round(x.r * 100)}%"></i></div></div><div class="rate-v tnum">%${Math.round(x.r * 100)}${x.s > 1 ? `<div class="m-flame" style="font-size:0.73rem;display:flex;gap:2px;justify-content:flex-end;align-items:center">${ic('flame')}${x.s}</div>` : ''}</div></div>`; }).join('')}</div>
+    </div>` : ''}
+    ${catRows.length ? `<div class="card panel">
+      <div class="panel-h"><h3>Kategoriler</h3><span>30 günde tamamlanan</span></div>
+      <div class="rates">${catRows.map(([cid, n]) => { const c = cat(cid); return `<div class="rate"><span class="cat-ic" style="--c:${c.color}">${ic(c.icon)}</span><div style="min-width:0"><div class="rate-name">${esc(c.name)}</div><div class="rate-bar" style="--c:${c.color}"><i style="width:${Math.round(n / catMax * 100)}%"></i></div></div><div class="rate-v tnum">${n}</div></div>`; }).join('')}</div>
+    </div>` : ''}
+  </div>`;
+}
+
+// ============================================================
+//   LAYER: sheets & modals
+// ============================================================
+let layerStack = [];
+function openLayer(html, kind = 'sheet', onClose, isStatic = false) {
+  const root = $('#layer');
+  $('#toasts').innerHTML = '';
+  const over = document.createElement('div');
+  over.className = 'overlay' + (kind === 'modal' ? ' modal-over' : '');
+  const box = document.createElement('div');
+  box.className = kind;
+  box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true');
+  box.innerHTML = html;
+  root.append(over, box);
+  const entry = { over, box, kind, onClose, isStatic };
+  layerStack.push(entry);
+  over.addEventListener('click', () => { if (!entry.isStatic) closeLayer(entry); });
+  requestAnimationFrame(() => { over.classList.add('in'); box.classList.add('in'); });
+  setTimeout(() => { const f = box.querySelector('[autofocus]'); if (f && matchMedia('(pointer:fine)').matches) f.focus(); }, 320);
+  return entry;
+}
+function closeLayer(entry = layerStack[layerStack.length - 1]) {
+  if (!entry) return;
+  layerStack = layerStack.filter(e => e !== entry);
+  entry.over.classList.remove('in'); entry.box.classList.remove('in');
+  setTimeout(() => { entry.over.remove(); entry.box.remove(); }, 320);
+  if (entry.onClose) entry.onClose();
+}
+function closeAll() { [...layerStack].reverse().forEach(e => closeLayer(e)); }
+function confirmBox({ title, text, ok = 'Onayla', danger = false, onOk }) {
+  const e = openLayer(`<h2>${esc(title)}</h2><p>${esc(text)}</p><div class="row" style="justify-content:flex-end;gap:8px"><button class="btn btn-ghost" data-m="cancel">Vazgeç</button><button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" data-m="ok">${esc(ok)}</button></div>`, 'modal');
+  e.box.querySelector('[data-m=cancel]').onclick = () => closeLayer(e);
+  e.box.querySelector('[data-m=ok]').onclick = () => { closeLayer(e); onOk(); };
+}
+function showCodeModal(code, fresh) {
+  const e = openLayer(`<span class="cat-ic lg" style="--c:var(--accent)">${ic('key')}</span>
+    <h2>${fresh ? 'Hoş geldin! Kurtarma kodunu sakla' : 'Yeni kurtarma kodun'}</h2>
+    <p>Şifreni unutursan bu kodla yenileyebilirsin. Kod sadece şimdi gösterilir; ekran görüntüsü al ya da bir yere not et.</p>
+    <div class="code-box" id="code-box">${esc(code)}</div>
+    <div class="row" style="gap:8px"><button class="btn btn-ghost" data-m="copy" style="flex:1">${ic('copy')}Kopyala</button><button class="btn btn-primary" data-m="ok" style="flex:1">Not ettim</button></div>`, 'modal', null, true);
+  e.box.querySelector('[data-m=ok]').onclick = () => closeLayer(e);
+  e.box.querySelector('[data-m=copy]').onclick = () => copyText(code, e.box.querySelector('#code-box'));
+}
+function copyText(text, el) {
+  const sel = () => { if (!el) return; const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+  try {
+    navigator.clipboard.writeText(text).then(() => toast('Kopyalandı.'), () => { sel(); toast('Metin seçildi; kopyalamak için basılı tut.'); });
+  } catch { sel(); toast('Metin seçildi; kopyalamak için basılı tut.'); }
+}
+
+// ---------- EDITOR ----------
+let D = null, editorEntry = null;
+function openEditor(id, preset) {
+  const t = id ? task(id) : null;
+  D = t ? clone(t) : normTask(preset || {});
+  if (!t && preset) D.id = rid('t');
+  D._new = !t;
+  editorEntry = openLayer(`<div class="sheet-grip"></div>
+    <div class="sheet-h"><h2>${t ? 'Görevi düzenle' : 'Yeni görev'}</h2><button class="close-btn" data-act="close">${ic('x')}Kapat</button></div>
+    <div class="sheet-b" id="ed-body"></div>
+    <div class="sheet-f">${t ? `<button class="btn btn-danger" data-act="ed-del" style="flex:0 0 auto" aria-label="Sil">${ic('trash')}</button>` : ''}<button class="btn btn-primary" data-act="ed-save">${t ? 'Kaydet' : 'Görevi ekle'}</button></div>`, 'sheet', () => { D = null; editorEntry = null; });
+  renderEditorBody(true);
+}
+const OPTS = [
+  ['daily', 'Her gün', 'Her gün listende olur'],
+  ['weekly', 'Haftanın belirli günleri', 'Örneğin Pazartesi, Çarşamba, Cuma'],
+  ['monthly', 'Ayda bir', 'Ayın belirli bir günü, ör. fatura'],
+  ['yearly', 'Yılda bir', 'Ör. doğum günü, yıllık kontrol'],
+  ['once', 'Sadece bir kez', 'Seçtiğin tarihte, bir defaya mahsus'],
+];
+function renderEditorBody(first) {
+  const body = $('#ed-body'); if (!body) return;
+  const sc = body.scrollTop;
+  const r = D.rec, e = Math.max(1, r.every || 1);
+  const sub = {
+    weekly: `<div class="daypick" role="group" aria-label="Günler">${WEEK.map(d => `<button type="button" data-act="ed-day" data-v="${d}" aria-pressed="${r.days.includes(d)}" aria-label="${DAYS[d]}">${DAY3[d]}</button>`).join('')}</div>
+      <div class="row wrap" style="gap:.4rem"><button type="button" class="chip" data-act="ed-days" data-v="1,2,3,4,5">Hafta içi</button><button type="button" class="chip" data-act="ed-days" data-v="6,0">Hafta sonu</button><button type="button" class="chip" data-act="ed-days" data-v="1,2,3,4,5,6,0">Her gün</button></div>`,
+    monthly: `<select class="inp" id="f-mday" data-f="rec.mday" data-num="1" aria-label="Ayın hangi günü">${Array.from({ length: 31 }, (_, k) => `<option value="${k + 1}" ${r.mday === k + 1 ? 'selected' : ''}>Her ayın ${k + 1}. günü</option>`).join('')}<option value="-1" ${r.mday === -1 ? 'selected' : ''}>Her ayın son günü</option></select>
+      ${r.mday > 28 ? `<p class="note">${ic('alert')}<span>Kısa aylarda ayın son gününe kayar.</span></p>` : ''}`,
+    yearly: `<div class="grid2"><select class="inp" id="f-yday" data-f="rec.day" data-num="1" aria-label="Gün">${Array.from({ length: 31 }, (_, k) => `<option value="${k + 1}" ${r.day === k + 1 ? 'selected' : ''}>${k + 1}</option>`).join('')}</select><select class="inp" id="f-ymon" data-f="rec.month" data-num="1" aria-label="Ay">${MONTHS.map((mn, k) => `<option value="${k}" ${r.month === k ? 'selected' : ''}>${mn}</option>`).join('')}</select></div>`,
+    once: `<input class="inp" type="date" id="f-date" data-f="rec.date" value="${r.date}" aria-label="Tarih">`,
+  };
+  const times = D.times.map((tm, k) => `<div class="time-row"><input class="inp" type="time" id="f-time-${k}" data-f="times.${k}" value="${tm}" aria-label="${k + 1}. saat"><button type="button" class="del-btn" data-act="ed-time-del" data-v="${k}" aria-label="Bu saati sil">Sil</button></div>`).join('');
+  const presets = [['Sabah', '09:00'], ['Öğle', '13:00'], ['Akşam', '19:00'], ['Gece', '22:00']].filter(([, v]) => !D.times.includes(v));
+  const durN = D.end ? diffDays(D.start, D.end) + 1 : 0;
+  const c = cat(D.cat);
+  const moreSum = [c.name, D.end ? fmtShort(D.end) + ' tarihine kadar' : '', D.stock.on ? 'stok takibi' : '', D.note ? 'not var' : ''].filter(Boolean).join(' · ');
+  const everyLabel = { daily: 'Kaç günde bir?', weekly: 'Kaç haftada bir?', monthly: 'Kaç ayda bir?' }[r.type];
+
+  body.innerHTML = `
+    <div class="field"><label for="f-title">Görevin adı</label>
+    <input class="title-inp" id="f-title" data-f="title" placeholder="ör. Tansiyon ilacı" value="${esc(D.title)}" maxlength="120" ${first && D._new ? 'autofocus' : ''}></div>
+    ${D._new && !D.title ? `<div class="grp"><span class="note">Ya da hazır bir örnek seç:</span><div class="chips">${TEMPLATES.map((tp, k) => `<button type="button" class="tpl" data-act="ed-tpl" data-v="${k}">${ic(tp.icon)}${esc(tp.label)}</button>`).join('')}</div></div>` : ''}
+    <div class="summary" id="ed-sum">${ic('repeat')}<span></span></div>
+    <div class="grp"><span class="lbl">Ne sıklıkla tekrar etsin?</span>
+      <div class="opts" role="radiogroup">${OPTS.map(([k, l, d]) => `<button type="button" class="opt" role="radio" data-act="ed-type" data-v="${k}" aria-pressed="${r.type === k}" aria-checked="${r.type === k}"><span class="radio"></span><span><b>${l}</b><small>${d}</small></span></button>${r.type === k && sub[k] ? `<div class="opt-more">${sub[k]}</div>` : ''}`).join('')}</div>
+    </div>
+    <div class="grp"><span class="lbl">Hangi saatlerde?</span>
+      <div class="box">
+        ${times ? `<div class="times">${times}</div>` : `<p class="note">${ic('clock')}<span>Saat eklemezsen gün içinde istediğin zaman yapabilirsin. İlaç günde birkaç kez alınacaksa her biri için saat ekle.</span></p>`}
+        <div class="row wrap" style="gap:.4rem"><button type="button" class="chip" data-act="ed-time-add">${ic('plus')}Saat ekle</button>${presets.map(([l, v]) => `<button type="button" class="chip" data-act="ed-time-add" data-v="${v}">${l} ${v}</button>`).join('')}</div>
+      </div>
+    </div>
+    <div class="grp"><span class="lbl">Bu görev önemli mi?</span>
+      <div class="prio-pick" role="radiogroup" aria-label="Bu görev önemli mi?">
+        <button type="button" role="radio" data-act="ed-prio" data-v="0" aria-checked="${!D.priority}" aria-pressed="${!D.priority}">Hayır, normal</button>
+        <button type="button" role="radio" class="yes" data-act="ed-prio" data-v="1" aria-checked="${!!D.priority}" aria-pressed="${!!D.priority}">${ic('star')}Evet, önemli</button>
+      </div>
+      <p class="note">Önemli görevler listede sarı yıldız ve “Önemli” yazısıyla öne çıkar.</p>
+    </div>
+    <button type="button" class="more-toggle" data-act="ed-more" aria-expanded="${!!D._more}">${ic('sliders')}<span class="grow">Diğer ayarlar<small>${esc(moreSum)}</small></span>${ic('down')}</button>
+    ${D._more ? `
+    <div class="grp"><span class="lbl">Kategori</span><div class="row wrap" style="gap:.4rem">${S.data.cats.map(k => `<button type="button" class="chip chip-c" style="--c:${k.color}" data-act="ed-cat" data-v="${k.id}" aria-pressed="${D.cat === k.id}"><i></i>${esc(k.name)}</button>`).join('')}<button type="button" class="chip" data-act="cat-new">${ic('plus')}Yeni</button></div></div>
+    ${r.type !== 'once' ? `<div class="grp"><span class="lbl">Ne zamana kadar?</span><div class="box">
+      ${everyLabel ? `<div class="set-row"><span class="t">${everyLabel}</span><div class="stepper"><button type="button" data-act="ed-every" data-v="-1" aria-label="Azalt">−</button><output class="tnum">${e}</output><button type="button" data-act="ed-every" data-v="1" aria-label="Artır">+</button></div></div>` : ''}
+      <div class="grid2"><div class="field"><label for="f-start">Başlangıç</label><input class="inp" type="date" id="f-start" data-f="start" value="${D.start}"></div>
+      <div class="field"><label for="f-end">Bitiş</label><input class="inp" type="date" id="f-end" data-f="end" value="${D.end || ''}" min="${D.start}"></div></div>
+      <div class="row wrap" style="gap:.4rem"><button type="button" class="chip" data-act="ed-dur" data-v="0" aria-pressed="${!D.end}">Süresiz</button>${[7, 10, 14, 30].map(n => `<button type="button" class="chip" data-act="ed-dur" data-v="${n}" aria-pressed="${durN === n}">${n} gün</button>`).join('')}</div>
+    </div></div>` : ''}
+    <div class="box">
+      <label class="set-row" for="f-stock"><span><span class="t">Kaç tane kaldığını takip et</span><br><span class="s">İlaç gibi biten şeyler için</span></span><span class="switch"><input type="checkbox" id="f-stock" data-f="stock.on" data-rerender="1" ${D.stock.on ? 'checked' : ''}><span></span></span></label>
+      ${D.stock.on ? `<div class="grid3 mini">
+        <div class="field"><label for="f-qty">Elimdeki</label><input class="inp" type="number" inputmode="decimal" min="0" step="1" id="f-qty" data-f="stock.qty" data-num="1" value="${D.stock.qty}"></div>
+        <div class="field"><label for="f-per">Her seferde</label><input class="inp" type="number" inputmode="decimal" min="0.25" step="0.25" id="f-per" data-f="stock.per" data-num="1" value="${D.stock.per}"></div>
+        <div class="field"><label for="f-low">Uyar</label><input class="inp" type="number" inputmode="numeric" min="0" step="1" id="f-low" data-f="stock.low" data-num="1" value="${D.stock.low}"></div>
+      </div>` : ''}
+    </div>
+    <div class="field"><label for="f-note">Not</label><textarea class="inp" id="f-note" data-f="note" placeholder="ör. Tok karnına, bol suyla">${esc(D.note)}</textarea></div>` : ''}
+    <div class="err" id="ed-err"></div>`;
+  body.scrollTop = first ? 0 : sc;
+  updateSummary();
+}
+function updateSummary() {
+  const el = $('#ed-sum span'); if (!el || !D) return;
+  const t = D;
+  let s = recLabel(t, false);
+  if (t.times.length) s += ' · ' + [...t.times].filter(Boolean).sort().join(', ');
+  const nx = (t.rec.type !== 'weekly' || t.rec.days.length) ? nextOcc(t) : null;
+  if (t.rec.type === 'weekly' && !t.rec.days.length) s = 'En az bir gün seç';
+  else if (nx) s += ' · İlk: ' + relDay(nx);
+  if (t.end && t.rec.type !== 'once') s += ` · ${fmtShort(t.end)} tarihine kadar`;
+  el.textContent = s;
+}
+function setPath(obj, path, val) {
+  const ks = path.split('.'); let o = obj;
+  for (let k = 0; k < ks.length - 1; k++) o = o[ks[k]];
+  const last = ks[ks.length - 1];
+  if (Array.isArray(o)) o[+last] = val; else o[last] = val;
+}
+function onEditorInput(el) {
+  const f = el.dataset.f;
+  let val = el.type === 'checkbox' ? el.checked : el.value;
+  if (el.dataset.num) val = val === '' ? 0 : Number(val);
+  if (f === 'priority') val = val ? 1 : 0;
+  if (f === 'end') val = val || null;
+  setPath(D, f, val);
+  if (f === 'start' && D.end && D.end < D.start) D.end = null;
+  if (f === 'rec.date') D.start = D.rec.date || D.start;
+  if (el.dataset.rerender || el.tagName === 'SELECT' || f === 'start') renderEditorBody(); else updateSummary();
+}
+function saveEditor() {
+  const err = $('#ed-err');
+  D.title = D.title.trim();
+  if (!D.title) { err.textContent = 'Göreve bir ad ver.'; $('#f-title').focus(); return; }
+  if (D.rec.type === 'weekly' && !D.rec.days.length) { err.textContent = 'Haftalık görev için en az bir gün seç.'; return; }
+  if (D.rec.type === 'once' && !D.rec.date) { err.textContent = 'Bir tarih seç.'; return; }
+  if (!D.start) D.start = today();
+  D.times = [...new Set(D.times.filter(Boolean))].sort();
+  if (D.rec.type === 'once') { D.start = D.rec.date; D.end = null; }
+  const isNew = D._new; delete D._new; delete D._more;
+  const t = normTask(D);
+  if (isNew) S.data.tasks.push(t);
+  else { const k = S.data.tasks.findIndex(x => x.id === t.id); S.data.tasks[k] = t; }
+  saveApp();
+  closeLayer(editorEntry);
+  render();
+  const nx = nextOcc(t);
+  toast(isNew ? `Eklendi. ${nx ? 'İlk: ' + relDay(nx) + (t.times[0] ? ' ' + t.times[0] : '') : ''}` : 'Değişiklikler kaydedildi.');
+}
+
+// ---------- DETAIL ----------
+let detailEntry = null, detailCtx = null;
+function openDetail(id, date, slot) {
+  detailCtx = { id, date: date || today(), slot: slot == null ? null : +slot };
+  detailEntry = openLayer(`<div class="sheet-grip"></div><div class="sheet-h"><span class="eyebrow">Görev ayrıntısı</span><button class="close-btn" data-act="close">${ic('x')}Kapat</button></div><div class="sheet-b" id="dt-body"></div>`, 'sheet', () => { detailEntry = null; detailCtx = null; });
+  renderDetail();
+}
+function renderDetail() {
+  const body = $('#dt-body'); if (!body || !detailCtx) return;
+  const t = task(detailCtx.id);
+  if (!t) { closeLayer(detailEntry); return; }
+  const c = cat(t.cat), td = today(), date = detailCtx.date;
+  const streak = taskStreak(t), best = bestStreak(t), rate = taskRate(t);
+  const once = t.rec.type === 'once';
+  // last 35 days grid
+  let grid = '';
+  if (!once) {
+    const end = td, start = addDays(mondayOf(end), -28);
+    grid = WEEK.map(d => `<i style="font-size:0.60rem">${DAY3[d].slice(0, 2)}</i>`).join('');
+    for (let k = 0; k < 35; k++) {
+      const s = addDays(start, k), dd = parse(s).getDate();
+      if (s > td) { grid += `<i class="no" style="opacity:.2">${dd}</i>`; continue; }
+      if (s < t.start || !occursOn(t, s)) { grid += `<i class="no">${dd}</i>`; continue; }
+      const st = occState(t, s);
+      const cls = st === 'done' ? 'done' : st === 'part' ? 'part' : st === 'skip' ? 'skip' : s === td ? 'pend' : 'miss';
+      grid += `<i class="${cls}" title="${fmtDate(s)}">${dd}</i>`;
+    }
+  }
+  const occurs = once ? !t.archived : occursOn(t, date);
+  const slotDate = once ? (t.doneOn || td) : date;
+  const slots = occurs ? slotsOf(t).map((time, i) => ({ t, i, time, key: t.id + '.' + i, v: hv(slotDate, t.id + '.' + i), date: slotDate, overdue: once && !t.doneOn && t.rec.date < td })) : [];
+  const nexts = once ? [] : nextOcc(t, addDays(td, 1), 5);
+  const perDay = dosesPerDay(t);
+  const daysLeft = t.stock.on && perDay > 0 ? Math.floor(t.stock.qty / ((t.stock.per || 1) * perDay)) : null;
+  const allSkipped = occurs && slotsOf(t).every((_, i) => hv(date, t.id + '.' + i) === 's');
+  body.innerHTML = `
+    <div class="d-head"><span class="cat-ic lg" style="--c:${c.color}">${ic(c.icon)}</span><div style="min-width:0"><h2>${esc(t.title)}</h2><p>${esc(c.name)} · ${esc(recLabel(t))}${t.priority ? ' · Önemli' : ''}${t.paused ? ' · Duraklatıldı' : ''}</p></div></div>
+    ${!once ? `<div class="d-stats">
+      <div class="d-stat"><div class="v tnum" style="color:var(--flame)">${streak}</div><div class="k">Güncel seri</div></div>
+      <div class="d-stat"><div class="v tnum">${best}</div><div class="k">En iyi seri</div></div>
+      <div class="d-stat"><div class="v tnum">${rate == null ? '–' : '%' + Math.round(rate * 100)}</div><div class="k">30 gün oranı</div></div>
+    </div>` : `<div class="badges">${t.doneOn ? `<span class="badge ok">${ic('check')}${fmtDate(t.doneOn)} tarihinde tamamlandı</span>` : t.rec.date < td ? `<span class="badge warn">${ic('alert')}${fmtDate(t.rec.date)} tarihinden beri gecikmiş</span>` : `<span class="badge">${ic('calendar')}${relDay(t.rec.date)} · ${fmtDate(t.rec.date)}</span>`}</div>`}
+    ${slots.length ? `<section class="sec"><div class="sec-h"><h3>${once ? (t.doneOn ? 'Tamamlandı' : 'Tamamla') : relDay(date)}</h3></div><div class="list">${slots.map(it => itemRow(it, { noStreak: true })).join('')}</div></section>` : ''}
+    ${!once ? `<section class="sec"><div class="sec-h"><h3>Son 5 hafta</h3></div><div class="card panel" style="--c:${c.color}"><div class="mcal">${grid}</div>
+      <div class="legend" style="margin-top:0"><span><i style="background:${c.color}"></i>Yapıldı</span><span><i style="background:color-mix(in srgb,${c.color} 30%,transparent)"></i>Kısmen</span><span><i style="background:color-mix(in srgb,var(--danger) 14%,transparent)"></i>Kaçtı</span><span><i style="box-shadow:inset 0 0 0 1.5px var(--line)"></i>Atlandı</span></div></div></section>` : ''}
+    ${t.stock.on ? `<section class="sec"><div class="sec-h"><h3>Stok</h3></div><div class="card panel">
+      <div class="row between"><div><div style="font:800 1.73rem var(--f-display)" class="tnum ${t.stock.qty <= t.stock.low ? 'm-low' : ''}">${t.stock.qty} <span style="font-size:0.93rem;color:var(--muted);font-weight:700">adet</span></div><div class="s" style="font-size:0.87rem;color:var(--muted)">${daysLeft != null ? `Yaklaşık ${daysLeft} gün yeter${daysLeft > 0 ? ' · ' + fmtShort(addDays(td, daysLeft)) : ''}` : 'Doz başına ' + t.stock.per}</div></div>
+      <div class="row" style="gap:6px">${[10, 30].map(n => `<button class="btn btn-ghost btn-sm" data-act="stock-add" data-v="${n}">+${n}</button>`).join('')}</div></div>
+      <div class="row" style="gap:8px"><input class="inp" type="number" inputmode="numeric" id="stock-custom" placeholder="Adet gir" min="0" style="flex:1"><button class="btn btn-primary btn-sm" data-act="stock-set">Güncelle</button></div>
+    </div></section>` : ''}
+    ${t.note ? `<section class="sec"><div class="sec-h"><h3>Not</h3></div><div class="card panel" style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(t.note)}</div></section>` : ''}
+    ${nexts.length ? `<section class="sec"><div class="sec-h"><h3>Sıradaki tarihler</h3></div><div class="card panel next-list">${nexts.map(s => `<div><span>${relDay(s)}</span><span>${fmtShort(s)}${t.times.length ? ' · ' + t.times.join(', ') : ''}</span></div>`).join('')}</div></section>` : ''}
+    <div class="actions">
+      ${!once && occurs ? `<button class="act" data-act="skip">${ic(allSkipped ? 'undo' : 'skip')}${allSkipped ? 'Geri al' : 'Atla'}</button>` : ''}
+      <button class="act" data-act="star" style="${t.priority ? 'color:var(--warn)' : ''}">${ic('star')}${t.priority ? 'Önemliyi kaldır' : 'Önemli yap'}</button>
+      <button class="act" data-act="edit">${ic('edit')}Düzenle</button>
+      ${!once ? `<button class="act" data-act="pause">${ic(t.paused ? 'play' : 'pause')}${t.paused ? 'Sürdür' : 'Duraklat'}</button>` : ''}
+      <button class="act" data-act="archive">${ic('archive')}${t.archived ? 'Arşivden çıkar' : 'Arşivle'}</button>
+      <button class="act danger" data-act="delete">${ic('trash')}Sil</button>
+    </div>`;
+}
+function deleteTask(id) {
+  const t = task(id); if (!t) return;
+  confirmBox({
+    title: 'Görev silinsin mi?', text: `“${t.title}” ve tekrar planı silinecek. Geçmiş işaretlerin istatistiklerden de kalkar.`, ok: 'Sil', danger: true,
+    onOk: () => {
+      const k = S.data.tasks.indexOf(t);
+      S.data.tasks.splice(k, 1); saveApp(); closeAll(); render();
+      toast('Görev silindi.', { label: 'Geri al', fn: () => { S.data.tasks.splice(k, 0, t); saveApp(); render(); } });
+    },
+  });
+}
+
+// ---------- CATEGORY editor ----------
+function openCatEditor(id, after) {
+  const c0 = id ? S.data.cats.find(c => c.id === id) : null;
+  const C = c0 ? clone(c0) : { id: rid('c_'), name: '', color: CAT_COLORS[S.data.cats.length % CAT_COLORS.length], icon: 'star' };
+  const draw = () => `<div class="sheet-grip"></div><div class="sheet-h"><h2>${c0 ? 'Kategoriyi düzenle' : 'Yeni kategori'}</h2><button class="close-btn" data-c="close">${ic('x')}Kapat</button></div>
+    <div class="sheet-b">
+      <div class="row"><span class="cat-ic lg" id="cp" style="--c:${C.color}">${ic(C.icon)}</span><input class="inp" id="c-name" placeholder="Kategori adı" value="${esc(C.name)}" maxlength="24" style="flex:1"></div>
+      <div class="grp"><span class="lbl">Renk</span><div class="swatches">${CAT_COLORS.map(col => `<button type="button" class="sw" style="--c:${col}" data-c="color" data-v="${col}" aria-pressed="${C.color === col}" aria-label="Renk ${col}">${ic('check')}</button>`).join('')}</div></div>
+      <div class="grp"><span class="lbl">Simge</span><div class="icons" style="--c:${C.color}">${CAT_ICONS.map(n => `<button type="button" data-c="icon" data-v="${n}" aria-pressed="${C.icon === n}" aria-label="${n}">${ic(n)}</button>`).join('')}</div></div>
+      <div class="err" id="c-err"></div>
+    </div>
+    <div class="sheet-f">${c0 ? `<button class="btn btn-danger" data-c="del" style="flex:0 0 auto" aria-label="Sil">${ic('trash')}</button>` : ''}<button class="btn btn-primary" data-c="save">Kaydet</button></div>`;
+  const e = openLayer(draw(), 'sheet');
+  e.box.addEventListener('click', ev => {
+    const b = ev.target.closest('[data-c]'); if (!b) return;
+    const a = b.dataset.c;
+    C.name = $('#c-name', e.box).value;
+    if (a === 'close') return closeLayer(e);
+    if (a === 'color' || a === 'icon') { C[a] = b.dataset.v; e.box.innerHTML = draw(); return; }
+    if (a === 'save') {
+      if (!C.name.trim()) { $('#c-err', e.box).textContent = 'Kategoriye bir ad ver.'; return; }
+      C.name = C.name.trim();
+      if (c0) Object.assign(c0, C); else S.data.cats.push(C);
+      saveApp(); closeLayer(e); render(); after && after(C.id);
+    }
+    if (a === 'del') {
+      const used = S.data.tasks.filter(t => t.cat === C.id).length;
+      if (S.data.cats.length <= 1) { $('#c-err', e.box).textContent = 'En az bir kategori kalmalı.'; return; }
+      confirmBox({
+        title: 'Kategori silinsin mi?', text: used ? `${used} görev “${S.data.cats.find(x => x.id !== C.id).name}” kategorisine taşınacak.` : 'Bu kategoride görev yok.', ok: 'Sil', danger: true,
+        onOk: () => { const to = S.data.cats.find(x => x.id !== C.id).id; S.data.tasks.forEach(t => { if (t.cat === C.id) t.cat = to; }); S.data.cats = S.data.cats.filter(x => x.id !== C.id); saveApp(); closeLayer(e); render(); after && after(); },
+      });
+    }
+  });
+}
+
+// ---------- SETTINGS ----------
+let setEntry = null;
+function openSettings() {
+  setEntry = openLayer(`<div class="sheet-grip"></div><div class="sheet-h"><h2>Ayarlar</h2><button class="close-btn" data-act="close">${ic('x')}Kapat</button></div><div class="sheet-b" id="st-body"></div>`, 'sheet', () => { setEntry = null; });
+  renderSettings();
+}
+function renderSettings() {
+  const body = $('#st-body'); if (!body) return;
+  const st = S.data.settings, me = S.me;
+  const notif = typeof Notification !== 'undefined' ? Notification.permission : 'unsupported';
+  const sw = (id, key, t, s) => `<label class="set-row" for="${id}"><span><span class="t">${t}</span>${s ? `<br><span class="s">${s}</span>` : ''}</span><span class="switch"><input type="checkbox" id="${id}" data-set="${key}" ${st[key] ? 'checked' : ''}><span></span></span></label>`;
+  body.innerHTML = `
+    <div class="card prof"><span class="avatar" style="--c:${me.color}">${esc(me.name.charAt(0).toLocaleUpperCase('tr'))}</span><div style="min-width:0;flex:1"><h3>${esc(me.name)}</h3><p>@${esc(me.username)}</p></div><button class="btn btn-ghost btn-sm" data-act="edit-name">${ic('edit')}Ad</button></div>
+    <div class="row between wrap"><span class="sync ${S.mode === 'cloud' ? 'on' : 'off'}">${ic(S.mode === 'cloud' ? 'cloud' : 'device')}${S.mode === 'cloud' ? 'Bulutta senkron' : 'Bu cihazda kayıtlı'}</span><span class="s" style="font-size:0.83rem;color:var(--muted)">${S.data.tasks.length} görev · ${S.data.cats.length} kategori</span></div>
+
+    <div class="grp"><span class="lbl">Yazı boyutu</span>
+      <div class="seg fs-seg" role="group" aria-label="Yazı boyutu">${[['normal', 'Normal', 1], ['buyuk', 'Büyük', 1.2], ['cokbuyuk', 'Çok büyük', 1.4]].map(([k, l, z]) => `<button type="button" data-act="fontsize" data-v="${k}" aria-pressed="${(st.fontSize || 'normal') === k}"><b style="font-size:${z}rem">Aa</b>${l}</button>`).join('')}</div>
+    </div>
+    <div class="grp"><span class="lbl">Görünüm</span><div class="box">
+      <div class="seg" role="group" aria-label="Tema">${[['system', 'Otomatik'], ['light', 'Açık'], ['dark', 'Koyu']].map(([k, l]) => `<button type="button" data-act="theme" data-v="${k}" aria-pressed="${st.theme === k}">${l}</button>`).join('')}</div>
+      <div class="set-row"><span class="t">Vurgu rengi</span></div>
+      <div class="swatches">${ACCENTS.filter(a => !a.hidden).map(a => `<button type="button" class="sw" style="--c:${a.l}" data-act="accent" data-v="${a.id}" aria-pressed="${st.accent === a.id}" aria-label="${a.name}">${ic('check')}</button>`).join('')}</div>
+    </div></div>
+
+    <div class="grp"><span class="lbl">Davranış</span><div class="box">
+      ${sw('s-hide', 'hideDone', 'Tamamlananları gizle', 'Bugün ekranında sadece kalanları göster')}
+      ${sw('s-sound', 'sound', 'Tık sesi', 'Görev tamamlanınca kısa bir ses')}
+      ${sw('s-vib', 'vibrate', 'Titreşim', 'Destekleyen telefonlarda')}
+      ${sw('s-rem', 'remind', 'Saat gelince hatırlat', 'Uygulama açıkken saati gelen görev için uyarı gösterir')}
+      ${notif !== 'unsupported' && notif !== 'granted' ? `<button class="btn btn-ghost btn-sm" data-act="notif" style="justify-self:start">${ic('bell')}Tarayıcı bildirimlerine izin ver</button>` : ''}
+    </div></div>
+
+    <div class="grp"><span class="lbl">Kategoriler</span><div class="card set-list">
+      ${S.data.cats.map(c => `<button class="set-btn" data-act="cat-edit" data-v="${c.id}"><span class="cat-ic" style="--c:${c.color}">${ic(c.icon)}</span><span class="grow">${esc(c.name)}</span><span style="color:var(--faint);font-size:0.87rem" class="tnum">${S.data.tasks.filter(t => t.cat === c.id && !t.archived).length}</span>${ic('right')}</button>`).join('')}
+      <button class="set-btn" data-act="cat-new">${ic('plus')}<span class="grow">Kategori ekle</span></button>
+    </div></div>
+
+    <div class="grp"><span class="lbl">Veri</span><div class="card set-list">
+      <button class="set-btn" data-act="export">${ic('download')}<span class="grow">Yedeği indir (JSON)</span>${ic('right')}</button>
+      <button class="set-btn" data-act="import">${ic('upload')}<span class="grow">Yedekten geri yükle</span>${ic('right')}</button>
+    </div></div>
+
+    <div class="grp"><span class="lbl">Güvenlik</span><div class="card set-list">
+      <button class="set-btn" data-act="pw-change">${ic('key')}<span class="grow">Şifreyi değiştir</span>${ic('right')}</button>
+      <button class="set-btn" data-act="new-code">${ic('shield')}<span class="grow">Yeni kurtarma kodu oluştur</span>${ic('right')}</button>
+      <button class="set-btn" data-act="logout">${ic('logout')}<span class="grow">Çıkış yap</span></button>
+      <button class="set-btn danger" data-act="del-acc">${ic('trash')}<span class="grow">Hesabı ve tüm verileri sil</span></button>
+    </div></div>
+    <p class="note" style="justify-content:center;text-align:center">Ritim · tekrar eden işlerin için</p>`;
+}
+function verifyPwModal(title, extra, onOk) {
+  const e = openLayer(`<h2>${esc(title)}</h2>
+    <div class="field"><label for="m-pw">Mevcut şifre</label><input class="inp" type="password" id="m-pw" autocomplete="current-password"></div>
+    ${extra || ''}
+    <div class="err" id="m-err"></div>
+    <div class="row" style="justify-content:flex-end;gap:8px"><button class="btn btn-ghost" data-m="cancel">Vazgeç</button><button class="btn btn-primary" data-m="ok">Devam</button></div>`, 'modal');
+  e.box.querySelector('[data-m=cancel]').onclick = () => closeLayer(e);
+  e.box.querySelector('[data-m=ok]').onclick = async () => {
+    const err = $('#m-err', e.box);
+    try {
+      await loadAccounts();
+      const acc = S.accounts.find(a => a.id === S.me.id);
+      if (!acc || (await hashPw($('#m-pw', e.box).value, acc.salt, acc.alg)) !== acc.hash) throw 'Mevcut şifre hatalı.';
+      await onOk(acc, e);
+    } catch (x) { err.textContent = typeof x === 'string' ? x : 'İşlem tamamlanamadı.'; if (typeof x !== 'string') console.error(x); }
+  };
+}
+async function exportData() {
+  const payload = JSON.stringify({ app: 'ritim', v: 1, exported: new Date().toISOString(), user: S.me.username, data: S.data, hist: S.hist }, null, 1);
+  const fn = `ritim-yedek-${S.me.username}-${today()}.json`;
+  let dl = null;
+  try { dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null; } catch {}
+  if (dl) {
+    try { await dl.save({ filename: fn, data: payload }); toast('Yedek kaydedildi.'); return; }
+    catch (e) { if (e && e.code === 'declined') return; }
+  }
+  try {
+    const url = URL.createObjectURL(new Blob([payload], { type: 'application/json' }));
+    const a = document.createElement('a'); a.href = url; a.download = fn; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    if (!window.claude) { toast('Yedek indirildi.'); return; }
+  } catch {}
+  const e = openLayer(`<h2>Yedek</h2><p>İndirme başlamadıysa aşağıdaki metni kopyalayıp bir dosyaya kaydedebilirsin.</p><textarea class="inp" id="exp-txt" readonly style="min-height:160px;font:12px var(--f-mono)">${esc(payload)}</textarea><div class="row" style="gap:8px"><button class="btn btn-ghost" data-m="copy" style="flex:1">${ic('copy')}Kopyala</button><button class="btn btn-primary" data-m="ok" style="flex:1">Tamam</button></div>`, 'modal');
+  e.box.querySelector('[data-m=ok]').onclick = () => closeLayer(e);
+  e.box.querySelector('[data-m=copy]').onclick = () => { const ta = $('#exp-txt', e.box); ta.select(); copyText(payload, null); };
+}
+function importData(file) {
+  const fr = new FileReader();
+  fr.onload = () => {
+    let j;
+    try { j = JSON.parse(fr.result); if (j.app !== 'ritim' || !j.data || !Array.isArray(j.data.tasks)) throw 0; }
+    catch { toast('Bu dosya bir Ritim yedeği değil.'); return; }
+    confirmBox({
+      title: 'Yedek geri yüklensin mi?', text: `${j.data.tasks.length} görev ve geçmişi yüklenecek. Şu anki görevlerin bu yedekle değiştirilir.`, ok: 'Geri yükle',
+      onOk: () => {
+        S.data = sanitizeApp(j.data); saveApp();
+        const old = Object.keys(S.hist);
+        S.hist = {};
+        Object.entries(j.hist || {}).forEach(([mk, m]) => { if (/^\d{4}-\d{2}$/.test(mk) && m && m.d) { S.hist[mk] = { d: m.d }; Store.write(hName(mk), { kind: 'hist', acct: S.me.id, month: mk, d: m.d }); } });
+        old.filter(mk => !S.hist[mk]).forEach(mk => Store.write(hName(mk), { kind: 'hist', acct: S.me.id, month: mk, d: {} }));
+        applyTheme(); closeAll(); render(); toast('Yedek geri yüklendi.');
+      },
+    });
+  };
+  fr.readAsText(file);
+}
+async function logout() {
+  clearTimeout(S.appTimer);
+  if (S.appTimer) { S.appTimer = null; Store.write('app_' + S.me.id, { kind: 'app', acct: S.me.id, ...S.data }); }
+  S.unsub.forEach(u => { try { u(); } catch {} }); S.unsub = [];
+  clearSession(); closeAll();
+  S.me = null; S.data = null; S.hist = {};
+  auth.tab = 'login'; auth.err = '';
+  document.documentElement.style.removeProperty('--acc-l'); document.documentElement.style.removeProperty('--acc-d'); document.documentElement.style.removeProperty('font-size');
+  renderAuth();
+}
+
+// ============================================================
+//   EVENTS
+// ============================================================
+document.addEventListener('click', ev => {
+  const b = ev.target.closest('[data-act]');
+  if (!b) return;
+  const a = b.dataset.act, v = b.dataset.v;
+  switch (a) {
+    // auth
+    case 'auth-tab': auth.tab = v; auth.err = ''; renderAuth(); break;
+    case 'pw-eye': { const inp = b.parentElement.querySelector('input'); inp.type = inp.type === 'password' ? 'text' : 'password'; break; }
+    case 'pick-user': $('#a-user').value = v; $('#a-pw').focus(); break;
+    // nav
+    case 'nav': S.view = v; render(); $('#view').scrollTop = 0; break;
+    case 'add': openEditor(); break;
+    case 'settings': openSettings(); break;
+    case 'close': closeLayer(); break;
+    case 'sel-day': S.sel = v; render(); break;
+    case 'week': S.sel = addDays(S.sel, +v); render(); break;
+    case 'toggle-hide': S.data.settings.hideDone = !S.data.settings.hideDone; saveApp(); render(); break;
+    case 'tpl': openEditor(null, TEMPLATES[+v].t); break;
+    case 'sample': {
+      [0, 1, 2, 3, 5].forEach(k => S.data.tasks.push(normTask(TEMPLATES[k].t)));
+      saveApp(); render(); toast('Örnek görevler eklendi. İstediğin gibi düzenleyebilirsin.');
+      break;
+    }
+    case 'cal-month': { const [y, m] = S.calMonth.split('-').map(Number); const d = new Date(y, m - 1 + (+v), 1); S.calMonth = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; render(); break; }
+    case 'cal-day': S.calSel = v; if (v.slice(0, 7) !== S.calMonth) S.calMonth = v.slice(0, 7); render(); break;
+    case 'filter': S.filter = v; render(); break;
+    // items
+    case 'toggle': ev.stopPropagation(); toggleSlot(b.dataset.id, +b.dataset.i, b.dataset.date); if (detailEntry) renderDetail(); break;
+    case 'detail': if (detailEntry && b.closest('#dt-body')) return; openDetail(b.dataset.id, b.dataset.date, b.dataset.i); break;
+    // detail actions
+    case 'skip': skipDay(detailCtx.id, detailCtx.date); renderDetail(); break;
+    case 'edit': { const id = detailCtx.id; closeLayer(detailEntry); openEditor(id); break; }
+    case 'pause': { const t = task(detailCtx.id); t.paused = !t.paused; saveApp(); render(); renderDetail(); toast(t.paused ? 'Duraklatıldı. Listede görünmeyecek.' : 'Görev yeniden aktif.'); break; }
+    case 'archive': { const t = task(detailCtx.id); t.archived = !t.archived; saveApp(); render(); if (t.archived) { closeLayer(detailEntry); toast('Arşive taşındı.', { label: 'Geri al', fn: () => { t.archived = false; saveApp(); render(); } }); } else renderDetail(); break; }
+    case 'star': { const t = task(detailCtx.id); t.priority = t.priority ? 0 : 1; saveApp(); render(); renderDetail(); toast(t.priority ? 'Önemli olarak işaretlendi.' : 'Önemli işareti kaldırıldı.'); break; }
+    case 'delete': deleteTask(detailCtx.id); break;
+    case 'stock-add': { const t = task(detailCtx.id); t.stock.qty += +v; saveApp(); render(); renderDetail(); toast(`Stok ${t.stock.qty} adet oldu.`); break; }
+    case 'stock-set': { const inp = $('#stock-custom'); const n = Number(inp.value); if (inp.value === '' || isNaN(n) || n < 0) { inp.focus(); return; } const t = task(detailCtx.id); t.stock.qty = n; saveApp(); render(); renderDetail(); toast('Stok güncellendi.'); break; }
+    // editor
+    case 'ed-tpl': { const id = D.id; const p = TEMPLATES[+v].t; Object.assign(D, normTask(p)); D.id = id; D._new = true; renderEditorBody(); break; }
+    case 'ed-type': {
+      D.rec.type = v;
+      if (v === 'weekly' && !D.rec.days.length) D.rec.days = [parse(D.start).getDay()];
+      if (v === 'once' && !D.rec.date) D.rec.date = today();
+      D.rec.every = 1; renderEditorBody(); break;
+    }
+    case 'ed-prio': D.priority = +v; renderEditorBody(); break;
+    case 'ed-more': D._more = !D._more; renderEditorBody(); break;
+    case 'ed-every': D.rec.every = Math.min(52, Math.max(1, (D.rec.every || 1) + (+v))); renderEditorBody(); break;
+    case 'ed-day': { const d = +v, ds = D.rec.days; D.rec.days = ds.includes(d) ? ds.filter(x => x !== d) : [...ds, d]; renderEditorBody(); break; }
+    case 'ed-days': D.rec.days = v.split(',').map(Number); renderEditorBody(); break;
+    case 'ed-cat': D.cat = v; renderEditorBody(); break;
+    case 'ed-time-add': {
+      let tm = v;
+      if (!tm) { const last = [...D.times].filter(Boolean).sort().pop(); if (last) { const h = Math.min(23, +last.slice(0, 2) + 4); tm = `${pad(h)}:${last.slice(3)}`; } else tm = '09:00'; }
+      if (!D.times.includes(tm)) D.times.push(tm);
+      D.times.sort(); renderEditorBody(); break;
+    }
+    case 'ed-time-del': D.times.splice(+v, 1); renderEditorBody(); break;
+    case 'ed-dur': D.end = +v ? addDays(D.start, +v - 1) : null; renderEditorBody(); break;
+    case 'ed-save': saveEditor(); break;
+    case 'ed-del': { const id = D.id; closeLayer(editorEntry); deleteTask(id); break; }
+    case 'cat-new': openCatEditor(null, id => { if (D && id) { D.cat = id; renderEditorBody(); } renderSettings(); }); break;
+    case 'cat-edit': openCatEditor(v, () => renderSettings()); break;
+    // settings
+    case 'fontsize': S.data.settings.fontSize = v; try { localStorage.setItem(LP + 'fs', v); } catch {} saveApp(); applyTheme(); renderSettings(); break;
+    case 'theme': S.data.settings.theme = v; saveApp(); applyTheme(); renderSettings(); break;
+    case 'accent': S.data.settings.accent = v; saveApp(); applyTheme(); renderSettings(); render(); break;
+    case 'notif': try { Notification.requestPermission().then(p => { toast(p === 'granted' ? 'Bildirimler açıldı.' : 'Bildirim izni verilmedi. Uygulama açıkken ekranda hatırlatma göstermeye devam eder.'); renderSettings(); }).catch(() => toast('Bu görünümde tarayıcı bildirimi kullanılamıyor. Ekran içi hatırlatmalar açık.')); } catch { toast('Bu görünümde tarayıcı bildirimi kullanılamıyor. Ekran içi hatırlatmalar açık.'); } break;
+    case 'export': exportData(); break;
+    case 'import': $('#import-file').click(); break;
+    case 'logout': logout(); break;
+    case 'edit-name': {
+      const e = openLayer(`<h2>Adını değiştir</h2><input class="inp" id="m-name" value="${esc(S.me.name)}" maxlength="40"><div class="err" id="m-err"></div><div class="row" style="justify-content:flex-end;gap:8px"><button class="btn btn-ghost" data-m="cancel">Vazgeç</button><button class="btn btn-primary" data-m="ok">Kaydet</button></div>`, 'modal');
+      e.box.querySelector('[data-m=cancel]').onclick = () => closeLayer(e);
+      e.box.querySelector('[data-m=ok]').onclick = async () => {
+        const n = $('#m-name', e.box).value.trim(); if (n.length < 2) { $('#m-err', e.box).textContent = 'En az 2 harf yaz.'; return; }
+        await loadAccounts(); const acc = S.accounts.find(x => x.id === S.me.id); acc.name = n; S.me = acc; await saveAccounts();
+        closeLayer(e); renderSettings(); render(); toast('Adın güncellendi.');
+      };
+      break;
+    }
+    case 'pw-change':
+      verifyPwModal('Şifreyi değiştir', `<div class="field"><label for="m-pw1">Yeni şifre</label><input class="inp" type="password" id="m-pw1" autocomplete="new-password"></div><div class="field"><label for="m-pw2">Yeni şifre tekrar</label><input class="inp" type="password" id="m-pw2" autocomplete="new-password"></div>`, async (acc, e) => {
+        const p1 = $('#m-pw1', e.box).value, p2 = $('#m-pw2', e.box).value;
+        if (p1.length < 6) throw 'Yeni şifre en az 6 karakter olmalı.';
+        if (p1 !== p2) throw 'Yeni şifreler eşleşmiyor.';
+        acc.salt = randStr(16); acc.hash = await hashPw(p1, acc.salt, acc.alg); await saveAccounts(); S.me = acc;
+        closeLayer(e); toast('Şifren değiştirildi.');
+      });
+      break;
+    case 'new-code':
+      verifyPwModal('Yeni kurtarma kodu', '<p>Eski kod geçersiz olacak.</p>', async (acc, e) => {
+        const code = recoveryCode(); acc.rsalt = randStr(16); acc.rhash = await hashPw(normCode(code), acc.rsalt, acc.alg); await saveAccounts();
+        closeLayer(e); showCodeModal(code, false);
+      });
+      break;
+    case 'del-acc':
+      verifyPwModal('Hesabı sil', '<p>Tüm görevlerin, geçmişin ve hesabın kalıcı olarak silinir. Bu işlem geri alınamaz.</p>', async (acc, e) => {
+        closeLayer(e);
+        const aid = acc.id;
+        await Store.del('app_' + aid).catch(() => {});
+        for (const mk of Object.keys(S.hist)) await Store.del(hName(mk)).catch(() => {});
+        S.accounts = S.accounts.filter(x => x.id !== aid); await saveAccounts();
+        try { const l = lastUsers().filter(u => u !== acc.username); localStorage.setItem(LP + 'recent:' + S.scope, JSON.stringify(l)); } catch {}
+        await logout(); toast('Hesabın silindi.');
+      });
+      break;
+  }
+});
+document.addEventListener('input', ev => {
+  const el = ev.target;
+  if (el.id === 't-search') { S.q = el.value; const l = $('#t-list'); if (l) l.innerHTML = taskListHTML(); return; }
+  if (el.dataset.f && D && el.closest('#ed-body') && el.type !== 'checkbox' && el.tagName !== 'SELECT' && el.type !== 'date' && el.type !== 'time') onEditorInput(el);
+});
+document.addEventListener('change', ev => {
+  const el = ev.target;
+  if (el.dataset.f && D && el.closest('#ed-body') && (el.type === 'checkbox' || el.tagName === 'SELECT' || el.type === 'date' || el.type === 'time')) onEditorInput(el);
+  if (el.dataset.set) { S.data.settings[el.dataset.set] = el.checked; saveApp(); if (el.dataset.set === 'hideDone') render(); }
+  if (el.id === 'import-file' && el.files[0]) { importData(el.files[0]); el.value = ''; }
+});
+document.addEventListener('keydown', ev => {
+  if (ev.key === 'Escape' && layerStack.length && !layerStack[layerStack.length - 1].isStatic) closeLayer();
+  if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.matches('[role=button][data-act]')) { ev.preventDefault(); ev.target.click(); }
+  if (ev.key === 'Enter' && ev.target.id === 'f-title') { ev.preventDefault(); ev.target.blur(); }
+});
+
+// ---------- ticker: midnight rollover & reminders ----------
+setInterval(() => {
+  if (!S.me) return;
+  const td = today();
+  if (td !== S.lastToday) {
+    if (S.sel === S.lastToday) S.sel = td;
+    if (S.calSel === S.lastToday) S.calSel = td;
+    S.lastToday = td; render(); return;
+  }
+  if (!S.data.settings.remind) return;
+  const hm = nowHM();
+  for (const it of dayItems(td, false)) {
+    if (!it.time || isDone(it.v) || it.v === 's') continue;
+    const nk = td + it.key;
+    if (it.time <= hm && it.time >= addMin(hm, -2) && !S.notified[nk]) {
+      S.notified[nk] = 1;
+      const msg = `Zamanı geldi: ${it.t.title} (${it.time})`;
+      toast(msg, { label: 'Yaptım', fn: () => toggleSlot(it.t.id, it.i, td) });
+      try { navigator.vibrate && S.data.settings.vibrate && navigator.vibrate([60, 60, 60]); } catch {}
+      notify(msg);
+      if (S.view === 'today') render();
+    }
+  }
+}, 20000);
+function addMin(hm, n) { const [h, m] = hm.split(':').map(Number); const t = Math.max(0, h * 60 + m + n); return `${pad(Math.floor(t / 60))}:${pad(t % 60)}`; }
+document.addEventListener('visibilitychange', () => { if (!document.hidden && S.me) render(); });
+
+// ============================================================
+//   BOOT
+// ============================================================
+async function boot() {
+  renderSplash();
+  let db = null, user = null, uidv = null;
+  if (window.claude && typeof window.claude.use === 'function') {
+    try {
+      [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+      if (user) uidv = await user.id();
+    } catch (e) { console.warn(e); }
+  }
+  if (db && uidv) { S.mode = 'cloud'; S.db = db; S.base = 'data/users/' + uidv; S.scope = uidv; }
+  else { S.mode = 'local'; S.scope = 'local'; }
+  try { await loadAccounts(); }
+  catch (e) { console.warn('cloud unavailable, falling back to device', e); S.mode = 'local'; S.scope = 'local'; S.db = null; await loadAccounts(); }
+  const sess = readSession();
+  const acc = sess && sess.scope === S.scope && S.accounts.find(a => a.id === sess.aid);
+  if (acc) { try { await enter(acc); return; } catch (e) { console.error(e); } }
+  auth.tab = S.accounts.length ? 'login' : 'register';
+  renderAuth();
+}
+function notify(msg) {
+  try {
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted' || !document.hidden) return;
+    const opts = { body: msg, icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: 'ritim-' + msg };
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.ready.then(r => r.showNotification('Ritim', opts)).catch(() => {});
+    else new Notification('Ritim', opts);
+  } catch {}
+}
+// Standalone (GitHub Pages) extras: offline cache, home-screen install, keep data from being evicted
+if (!window.claude && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+    try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch {}
+  });
+}
+boot();
+</script>
+
+</body>
+</html>
