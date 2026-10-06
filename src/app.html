@@ -493,6 +493,18 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .sheet-h h2{font-size:min(1.4rem,6vw)}
 .title-inp{font-size:min(1.45rem,6.4vw)}
 .code-box{font-size:min(1.4rem,6vw)}
+/* Form fields: date/time inputs on Android have a wide built-in minimum width that pushed
+   the two-column rows (and the whole sheet) sideways. Columns may shrink, inputs too. */
+.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.field{min-width:0}
+.inp{min-width:0;max-width:100%}
+input[type="date"].inp,input[type="time"].inp{display:block;width:100%}
+.times{grid-template-columns:minmax(0,1fr)}
+.time-row{min-width:0}
+.time-row .inp{flex:1}
+.sheet-b,.modal{overflow-x:hidden}
+@media (max-width:419px){ .grid2.dates{grid-template-columns:minmax(0,1fr)} }
 
 @media (min-width:640px){ .tiles{grid-template-columns:repeat(4,1fr)} }
 @media (prefers-reduced-motion: reduce){
@@ -1758,7 +1770,7 @@ function renderEditorBody(first) {
     <div class="grp"><span class="lbl">Kategori</span><div class="row wrap" style="gap:.4rem">${S.data.cats.map(k => `<button type="button" class="chip chip-c" style="--c:${k.color}" data-act="ed-cat" data-v="${k.id}" aria-pressed="${D.cat === k.id}"><i></i>${esc(k.name)}</button>`).join('')}<button type="button" class="chip" data-act="cat-new">${ic('plus')}Yeni</button></div></div>
     ${r.type !== 'once' ? `<div class="grp"><span class="lbl">Ne zamana kadar?</span><div class="box">
       ${everyLabel ? `<div class="set-row"><span class="t">${everyLabel}</span><div class="stepper"><button type="button" data-act="ed-every" data-v="-1" aria-label="Azalt">−</button><output class="tnum">${e}</output><button type="button" data-act="ed-every" data-v="1" aria-label="Artır">+</button></div></div>` : ''}
-      <div class="grid2"><div class="field"><label for="f-start">Başlangıç</label><input class="inp" type="date" id="f-start" data-f="start" value="${D.start}"></div>
+      <div class="grid2 dates"><div class="field"><label for="f-start">Başlangıç</label><input class="inp" type="date" id="f-start" data-f="start" value="${D.start}"></div>
       <div class="field"><label for="f-end">Bitiş</label><input class="inp" type="date" id="f-end" data-f="end" value="${D.end || ''}" min="${D.start}"></div></div>
       <div class="row wrap" style="gap:.4rem"><button type="button" class="chip" data-act="ed-dur" data-v="0" aria-pressed="${!D.end}">Süresiz</button>${[7, 10, 14, 30].map(n => `<button type="button" class="chip" data-act="ed-dur" data-v="${n}" aria-pressed="${durN === n}">${n} gün</button>`).join('')}</div>
     </div></div>` : ''}

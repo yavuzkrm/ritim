@@ -108,6 +108,21 @@ const check = (name, cond, extra = '') => results.push({ ok: !!cond, line: `${co
       const out = await run(() => [...document.querySelectorAll('#view *, .tabbar *')].filter(e => { const r = e.getBoundingClientRect(); return r.width && (r.right > innerWidth + 1 || r.left < -1) && !e.closest('.chips') && !e.closest('.heat'); }).length);
       check(`fits 320px with the largest text on ${v}`, out === 0, out ? `${out} elements` : '');
     }
+    // Android Chrome draws date/time inputs much wider than desktop Chrome. Imitate that
+    // and check that the task editor still fits and never scrolls sideways.
+    await run(() => { const st = document.createElement('style'); st.id = 'wide-inputs'; st.textContent = 'input[type=date]::-webkit-datetime-edit,input[type=time]::-webkit-datetime-edit{padding-right:9rem}'; document.head.appendChild(st); });
+    await tap('.tab[data-v=today]'); await sleep(200);
+    await tap('.fab-wrap'); await sleep(450);
+    await tap('[data-act=ed-time-add][data-v="09:00"]'); await sleep(120);
+    await tap('[data-act=ed-more]'); await sleep(150);
+    await tap('#f-stock'); await sleep(150);
+    const ed = await run(() => {
+      const b = document.querySelector('#ed-body') || document.querySelector('.sheet-b');
+      const out = [...document.querySelectorAll('.sheet *')].filter(e => { const r = e.getBoundingClientRect(); return r.width && (r.right > innerWidth + 1 || r.left < -1) && !e.closest('.chips'); }).length;
+      return { sideways: b.scrollWidth > b.clientWidth + 1, out };
+    });
+    check('task editor fits with wide Android date inputs', !ed.sideways && ed.out === 0, JSON.stringify(ed));
+    await run(() => { document.getElementById('wide-inputs').remove(); closeAll(); }); await sleep(400);
     await run(() => { S.data.settings.fontSize = 'normal'; applyTheme(); render(); });
     await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
     await tap('.tab[data-v=tasks]'); await sleep(200);
