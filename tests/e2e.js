@@ -99,6 +99,17 @@ const check = (name, cond, extra = '') => results.push({ ok: !!cond, line: `${co
       const overflow = await run(() => [...document.querySelectorAll('#view *')].some(e => e.getBoundingClientRect().right > innerWidth + 1 && !e.closest('.chips') && !e.closest('.heat')));
       check(`no sideways overflow on ${v}`, !overflow);
     }
+    // Smallest common phone width with the largest text size: nothing may stick out,
+    // including the tab bar.
+    await page.setViewport({ width: 320, height: 640, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+    await run(() => { S.data.settings.fontSize = 'cokbuyuk'; applyTheme(); render(); });
+    for (const v of ['today', 'calendar', 'tasks', 'stats']) {
+      await tap(`.tab[data-v=${v}]`); await sleep(300);
+      const out = await run(() => [...document.querySelectorAll('#view *, .tabbar *')].filter(e => { const r = e.getBoundingClientRect(); return r.width && (r.right > innerWidth + 1 || r.left < -1) && !e.closest('.chips') && !e.closest('.heat'); }).length);
+      check(`fits 320px with the largest text on ${v}`, out === 0, out ? `${out} elements` : '');
+    }
+    await run(() => { S.data.settings.fontSize = 'normal'; applyTheme(); render(); });
+    await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
     await tap('.tab[data-v=tasks]'); await sleep(200);
     await page.type('#t-search', 'anti'); await sleep(200);
     check('search filters the list', (await page.$$('#t-list .item')).length === 1);
