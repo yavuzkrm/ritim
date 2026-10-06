@@ -597,7 +597,56 @@ const S = {
   unsub: [], appTimer: null, notified: {}, celebrated: {}, lastToday: today(),
 };
 
-// ---------- storage layer (claude.ai db when available, otherwise this device) ----------
+// ---------- storage layer (claude.ai db, the Ritim server, or this device) ----------
+async function api(method, path, body) {
+  let r;
+  try {
+    r = await fetch('api/' + path, {
+      method, credentials: 'same-origin', cache: 'no-store',
+      headers: body !== undefined ? { 'Content-Type': 'application/json' } : {},
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch { throw { code: 'unavailable' }; }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw { code: r.status === 413 ? 'quota_exceeded' : (j.error || 'server_error'), status: r.status };
+  return j;
+}
+const API_ERR = {
+  username_taken: 'Bu kullanıcı adı alınmış. Başka bir tane dene.',
+  invalid_username: 'Kullanıcı adı 3–20 karakter olmalı; harf, rakam, nokta ve alt çizgi kullanabilirsin.',
+  short_name: 'Adını en az 2 harf olacak şekilde yaz.',
+  weak_password: 'Şifre en az 6 karakter olmalı.',
+  wrong_credentials: 'Kullanıcı adı veya şifre hatalı.',
+  wrong_code: 'Kullanıcı adı veya kurtarma kodu hatalı.',
+  wrong_password: 'Mevcut şifre hatalı.',
+  too_many_attempts: 'Çok fazla deneme yapıldı. Biraz bekleyip tekrar dene.',
+  unavailable: 'Sunucuya ulaşılamadı. İnternet bağlantını kontrol et.',
+};
+// Same as api(), but turns errors into messages the forms can show.
+async function apiAuth(method, path, body) {
+  try { return await api(method, path, body); }
+  catch (e) { throw API_ERR[e && e.code] || 'Bir şeyler ters gitti. Tekrar dene.'; }
+}
+// Server mode has no live listener, so devices poll for documents changed since the last revision.
+const Sync = {
+  rev: 0, subs: new Set(), timer: null, busy: false,
+  add(fn) {
+    this.subs.add(fn);
+    if (!this.timer) this.timer = setInterval(() => this.poll(), 15000);
+    return () => { this.subs.delete(fn); if (!this.subs.size) { clearInterval(this.timer); this.timer = null; this.rev = 0; } };
+  },
+  async poll() {
+    if (this.busy || document.hidden || S.mode !== 'server' || !S.me || !this.subs.size) return;
+    this.busy = true;
+    try {
+      const { rev, docs } = await api('GET', 'docs?since=' + this.rev);
+      this.rev = Math.max(this.rev, rev);
+      if (Object.keys(docs).length) this.subs.forEach(fn => fn(docs));
+    } catch (e) {
+      if (e && e.status === 401 && S.me) { S.appTimer = null; await logout(); toast('Oturumun sona erdi. Tekrar giriş yap.'); }
+    } finally { this.busy = false; }
+  },
+};
 const mem = {};
 const W = {};
 const Store = {
@@ -610,16 +659,22 @@ const Store = {
       catch (e) { if (e && e.code === 'unavailable') { await sleep(600 + Math.random() * 600); snap = await this.ref(name).get(); } else throw e; }
       return snap.exists ? clone(snap.data()) : null;
     }
+    if (S.mode === 'server') {
+      try { return await api('GET', 'docs/' + name); }
+      catch (e) { if (e && e.status === 404) return null; throw e; }
+    }
     try { const v = localStorage.getItem(this.lsKey(name)); return v ? JSON.parse(v) : null; }
     catch { return mem[name] ? clone(mem[name]) : null; }
   },
   async raw(name, data) {
     if (S.mode === 'cloud') return this.ref(name).set(data);
+    if (S.mode === 'server') return api('PUT', 'docs/' + name, data);
     try { localStorage.setItem(this.lsKey(name), JSON.stringify(data)); }
     catch { mem[name] = clone(data); }
   },
   async del(name) {
     if (S.mode === 'cloud') return this.ref(name).delete();
+    if (S.mode === 'server') return api('DELETE', 'docs/' + name);
     try { localStorage.removeItem(this.lsKey(name)); } catch { delete mem[name]; }
   },
   write(name, data) {
@@ -642,7 +697,9 @@ const Store = {
     w.busy = false;
   },
   pending(name) { const w = W[name]; return !!(w && (w.busy || w.next)); },
+  async idle(ms = 4000) { const end = Date.now() + ms; while (Object.keys(W).some(n => this.pending(n)) && Date.now() < end) await sleep(100); },
   watch(name, cb) {
+    if (S.mode === 'server') return Sync.add(docs => { if (docs[name] && !this.pending(name)) cb(clone(docs[name])); });
     if (S.mode !== 'cloud') return () => {};
     return this.ref(name).onSnapshot(snap => {
       if (snap.metadata.hasPendingWrites || this.pending(name)) return;
@@ -658,6 +715,12 @@ const Store = {
         snap.docs.forEach(d => { if (!this.pending(d.id)) out[d.id] = clone(d.data()); });
         cb(out);
       }, e => console.warn('hist', e));
+    }
+    if (S.mode === 'server') {
+      const pre = 'h_' + aid + '_';
+      const pick = docs => { const out = {}; for (const [k, v] of Object.entries(docs)) if (k.startsWith(pre) && !this.pending(k)) out[k] = clone(v); return out; };
+      api('GET', 'docs?prefix=' + encodeURIComponent(pre)).then(r => cb(pick(r.docs))).catch(e => { console.warn('hist', e); cb({}); });
+      return Sync.add(docs => { const out = pick(docs); if (Object.keys(out).length) cb(out); });
     }
     const out = {};
     try {
@@ -726,11 +789,24 @@ function lastUsers() { try { return JSON.parse(localStorage.getItem(LP + 'recent
 function pushLastUser(u) { try { const l = lastUsers().filter(x => x !== u); l.unshift(u); localStorage.setItem(LP + 'recent:' + S.scope, JSON.stringify(l.slice(0, 4))); } catch {} }
 
 // ---------- accounts ----------
+// In server mode the server owns the accounts; this device only remembers who signed in
+// recently (name, username, colour) for the quick sign-in buttons.
 async function loadAccounts() {
+  if (S.mode === 'server') {
+    try { S.accounts = JSON.parse(localStorage.getItem(LP + 'server:accounts') || '[]'); } catch { S.accounts = []; }
+    return;
+  }
   const doc = await Store.get('accounts');
   S.accounts = (doc && Array.isArray(doc.list)) ? doc.list : [];
 }
-async function saveAccounts() { await Store.raw('accounts', { kind: 'accounts', list: S.accounts }); }
+async function saveAccounts() {
+  if (S.mode === 'server') { try { localStorage.setItem(LP + 'server:accounts', JSON.stringify(S.accounts.map(publicAcc))); } catch {} return; }
+  await Store.raw('accounts', { kind: 'accounts', list: S.accounts });
+}
+function rememberAcc(acc) {
+  S.accounts = [publicAcc(acc), ...S.accounts.filter(a => a.username !== acc.username)].slice(0, 4);
+  saveAccounts();
+}
 const findUser = u => S.accounts.find(a => a.username === String(u || '').trim().toLowerCase());
 const publicAcc = a => a && ({ id: a.id, name: a.name, username: a.username, color: a.color });
 
@@ -740,6 +816,12 @@ async function doRegister(f) {
   if (!/^[a-z0-9_.]{3,20}$/.test(username)) throw 'Kullanıcı adı 3–20 karakter olmalı; harf, rakam, nokta ve alt çizgi kullanabilirsin.';
   if (f.pw.length < 6) throw 'Şifre en az 6 karakter olmalı.';
   if (f.pw !== f.pw2) throw 'Şifreler birbiriyle eşleşmiyor.';
+  if (S.mode === 'server') {
+    const color = CAT_COLORS[Math.floor(Math.random() * CAT_COLORS.length)];
+    const r = await apiAuth('POST', 'register', { name, username, password: f.pw, color, remember: f.rem });
+    rememberAcc(r.account);
+    return { acc: r.account, code: r.recoveryCode };
+  }
   await loadAccounts();
   if (findUser(username)) throw 'Bu kullanıcı adı alınmış. Başka bir tane dene.';
   const alg = hasSubtle() ? 'pbkdf2' : 'fnv';
@@ -754,7 +836,12 @@ async function doRegister(f) {
   return { acc, code };
 }
 let failCount = 0;
-async function doLogin(username, pw) {
+async function doLogin(username, pw, remember = true) {
+  if (S.mode === 'server') {
+    const r = await apiAuth('POST', 'login', { username, password: pw, remember });
+    rememberAcc(r.account);
+    return r.account;
+  }
   if (failCount > 3) await sleep(Math.min(4000, failCount * 500));
   await loadAccounts();
   const acc = findUser(username);
@@ -763,6 +850,13 @@ async function doLogin(username, pw) {
   return acc;
 }
 async function doReset(username, code, pw, pw2) {
+  if (S.mode === 'server') {
+    if (pw.length < 6) throw 'Yeni şifre en az 6 karakter olmalı.';
+    if (pw !== pw2) throw 'Şifreler birbiriyle eşleşmiyor.';
+    const r = await apiAuth('POST', 'reset', { username, code, password: pw });
+    rememberAcc(r.account);
+    return r.account;
+  }
   await loadAccounts();
   const acc = findUser(username);
   if (!acc || (await hashPw(normCode(code), acc.rsalt, acc.alg)) !== acc.rhash) { await sleep(700); throw 'Kullanıcı adı veya kurtarma kodu hatalı.'; }
@@ -1063,7 +1157,7 @@ function renderAuth() {
   applyTheme();
   const recents = lastUsers().filter(u => findUser(u));
   const heights = [100, 85, 100, 60, 100, 35, 10];
-  const cloud = S.mode === 'cloud';
+  const cloud = S.mode !== 'local';
   const form = auth.tab === 'login' ? `
       <div class="field"><label for="a-user">Kullanıcı adı</label><input class="inp" id="a-user" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ornek: ayse.k"></div>
       <div class="field"><label for="a-pw">Şifre</label><div class="pw"><input class="inp" id="a-pw" type="password" autocomplete="current-password" placeholder="Şifren"><button type="button" data-act="pw-eye" aria-label="Şifreyi göster">${ic('eye')}</button></div></div>
@@ -1105,7 +1199,9 @@ function renderAuth() {
       ${form}
     </form>
     <p class="note">${ic(cloud ? 'cloud' : 'device')}<span>${cloud
-      ? 'Verilerin claude.ai hesabına özel olarak kaydedilir; telefondan ve bilgisayardan aynı hesapla açtığında senkron olur.'
+      ? (S.mode === 'server'
+        ? 'Verilerin hesabına kaydedilir; telefondan ve bilgisayardan aynı hesapla giriş yaptığında senkron olur.'
+        : 'Verilerin claude.ai hesabına özel olarak kaydedilir; telefondan ve bilgisayardan aynı hesapla açtığında senkron olur.')
       : 'Verilerin bu cihazda saklanır. Ayarlar’dan yedek alıp başka cihaza taşıyabilirsin.'}</span></p>
   </div></div>`;
   const first = $('#a-user');
@@ -1121,11 +1217,11 @@ async function onAuthSubmit(e) {
   auth.busy = true; btn.disabled = true; btn.style.opacity = .7;
   try {
     if (auth.tab === 'login') {
-      const acc = await doLogin(v('a-user'), v('a-pw'));
+      const acc = await doLogin(v('a-user'), v('a-pw'), rem);
       writeSession(acc.id, rem); pushLastUser(acc.username);
       await enter(acc);
     } else if (auth.tab === 'register') {
-      const { acc, code } = await doRegister({ name: v('a-name'), username: v('a-user'), pw: v('a-pw'), pw2: v('a-pw2') });
+      const { acc, code } = await doRegister({ name: v('a-name'), username: v('a-user'), pw: v('a-pw'), pw2: v('a-pw2'), rem });
       writeSession(acc.id, rem); pushLastUser(acc.username);
       await enter(acc, true);
       showCodeModal(code, true);
@@ -1805,7 +1901,7 @@ function renderSettings() {
   const sw = (id, key, t, s) => `<label class="set-row" for="${id}"><span><span class="t">${t}</span>${s ? `<br><span class="s">${s}</span>` : ''}</span><span class="switch"><input type="checkbox" id="${id}" data-set="${key}" ${st[key] ? 'checked' : ''}><span></span></span></label>`;
   body.innerHTML = `
     <div class="card prof"><span class="avatar" style="--c:${me.color}">${esc(me.name.charAt(0).toLocaleUpperCase('tr'))}</span><div style="min-width:0;flex:1"><h3>${esc(me.name)}</h3><p>@${esc(me.username)}</p></div><button class="btn btn-ghost btn-sm" data-act="edit-name">${ic('edit')}Ad</button></div>
-    <div class="row between wrap"><span class="sync ${S.mode === 'cloud' ? 'on' : 'off'}">${ic(S.mode === 'cloud' ? 'cloud' : 'device')}${S.mode === 'cloud' ? 'Bulutta senkron' : 'Bu cihazda kayıtlı'}</span><span class="s" style="font-size:0.83rem;color:var(--muted)">${S.data.tasks.length} görev · ${S.data.cats.length} kategori</span></div>
+    <div class="row between wrap"><span class="sync ${S.mode !== 'local' ? 'on' : 'off'}">${ic(S.mode !== 'local' ? 'cloud' : 'device')}${S.mode !== 'local' ? 'Bulutta senkron' : 'Bu cihazda kayıtlı'}</span><span class="s" style="font-size:0.83rem;color:var(--muted)">${S.data.tasks.length} görev · ${S.data.cats.length} kategori</span></div>
 
     <div class="grp"><span class="lbl">Yazı boyutu</span>
       <div class="seg fs-seg" role="group" aria-label="Yazı boyutu">${[['normal', 'Normal', 1], ['buyuk', 'Büyük', 1.2], ['cokbuyuk', 'Çok büyük', 1.4]].map(([k, l, z]) => `<button type="button" data-act="fontsize" data-v="${k}" aria-pressed="${(st.fontSize || 'normal') === k}"><b style="font-size:${z}rem">Aa</b>${l}</button>`).join('')}</div>
@@ -1852,6 +1948,13 @@ function verifyPwModal(title, extra, onOk) {
   e.box.querySelector('[data-m=ok]').onclick = async () => {
     const err = $('#m-err', e.box);
     try {
+      if (S.mode === 'server') {
+        // The server checks the current password as part of each request.
+        const pw = $('#m-pw', e.box).value;
+        if (!pw) throw 'Mevcut şifreni yaz.';
+        await onOk(S.me, e, pw);
+        return;
+      }
       await loadAccounts();
       const acc = S.accounts.find(a => a.id === S.me.id);
       if (!acc || (await hashPw($('#m-pw', e.box).value, acc.salt, acc.alg)) !== acc.hash) throw 'Mevcut şifre hatalı.';
@@ -1902,6 +2005,7 @@ async function logout() {
   clearTimeout(S.appTimer);
   if (S.appTimer) { S.appTimer = null; Store.write('app_' + S.me.id, { kind: 'app', acct: S.me.id, ...S.data }); }
   S.unsub.forEach(u => { try { u(); } catch {} }); S.unsub = [];
+  if (S.mode === 'server') { await Store.idle(); await api('POST', 'logout').catch(() => {}); }
   clearSession(); closeAll();
   S.me = null; S.data = null; S.hist = {};
   auth.tab = 'login'; auth.err = '';
@@ -1984,37 +2088,51 @@ document.addEventListener('click', ev => {
     case 'export': exportData(); break;
     case 'import': $('#import-file').click(); break;
     case 'logout': logout(); break;
+    case 'retry-boot': boot(); break;
     case 'edit-name': {
       const e = openLayer(`<h2>Adını değiştir</h2><input class="inp" id="m-name" value="${esc(S.me.name)}" maxlength="40"><div class="err" id="m-err"></div><div class="row" style="justify-content:flex-end;gap:8px"><button class="btn btn-ghost" data-m="cancel">Vazgeç</button><button class="btn btn-primary" data-m="ok">Kaydet</button></div>`, 'modal');
       e.box.querySelector('[data-m=cancel]').onclick = () => closeLayer(e);
       e.box.querySelector('[data-m=ok]').onclick = async () => {
         const n = $('#m-name', e.box).value.trim(); if (n.length < 2) { $('#m-err', e.box).textContent = 'En az 2 harf yaz.'; return; }
-        await loadAccounts(); const acc = S.accounts.find(x => x.id === S.me.id); acc.name = n; S.me = acc; await saveAccounts();
+        if (S.mode === 'server') {
+          try { const r = await apiAuth('PATCH', 'account', { name: n }); S.me = { ...S.me, ...r.account }; rememberAcc(S.me); }
+          catch (x) { $('#m-err', e.box).textContent = x; return; }
+        } else { await loadAccounts(); const acc = S.accounts.find(x => x.id === S.me.id); acc.name = n; S.me = acc; await saveAccounts(); }
         closeLayer(e); renderSettings(); render(); toast('Adın güncellendi.');
       };
       break;
     }
     case 'pw-change':
-      verifyPwModal('Şifreyi değiştir', `<div class="field"><label for="m-pw1">Yeni şifre</label><input class="inp" type="password" id="m-pw1" autocomplete="new-password"></div><div class="field"><label for="m-pw2">Yeni şifre tekrar</label><input class="inp" type="password" id="m-pw2" autocomplete="new-password"></div>`, async (acc, e) => {
+      verifyPwModal('Şifreyi değiştir', `<div class="field"><label for="m-pw1">Yeni şifre</label><input class="inp" type="password" id="m-pw1" autocomplete="new-password"></div><div class="field"><label for="m-pw2">Yeni şifre tekrar</label><input class="inp" type="password" id="m-pw2" autocomplete="new-password"></div>`, async (acc, e, current) => {
         const p1 = $('#m-pw1', e.box).value, p2 = $('#m-pw2', e.box).value;
         if (p1.length < 6) throw 'Yeni şifre en az 6 karakter olmalı.';
         if (p1 !== p2) throw 'Yeni şifreler eşleşmiyor.';
+        if (S.mode === 'server') { await apiAuth('POST', 'account/password', { current, password: p1 }); closeLayer(e); toast('Şifren değiştirildi.'); return; }
         acc.salt = randStr(16); acc.hash = await hashPw(p1, acc.salt, acc.alg); await saveAccounts(); S.me = acc;
         closeLayer(e); toast('Şifren değiştirildi.');
       });
       break;
     case 'new-code':
-      verifyPwModal('Yeni kurtarma kodu', '<p>Eski kod geçersiz olacak.</p>', async (acc, e) => {
+      verifyPwModal('Yeni kurtarma kodu', '<p>Eski kod geçersiz olacak.</p>', async (acc, e, current) => {
+        if (S.mode === 'server') { const r = await apiAuth('POST', 'account/recovery-code', { current }); closeLayer(e); showCodeModal(r.recoveryCode, false); return; }
         const code = recoveryCode(); acc.rsalt = randStr(16); acc.rhash = await hashPw(normCode(code), acc.rsalt, acc.alg); await saveAccounts();
         closeLayer(e); showCodeModal(code, false);
       });
       break;
     case 'del-acc':
-      verifyPwModal('Hesabı sil', '<p>Tüm görevlerin, geçmişin ve hesabın kalıcı olarak silinir. Bu işlem geri alınamaz.</p>', async (acc, e) => {
+      verifyPwModal('Hesabı sil', '<p>Tüm görevlerin, geçmişin ve hesabın kalıcı olarak silinir. Bu işlem geri alınamaz.</p>', async (acc, e, current) => {
+        if (S.mode === 'server') {
+          // Deleting the account on the server removes its tasks and history too.
+          await apiAuth('DELETE', 'account', { current });
+          clearTimeout(S.appTimer); S.appTimer = null;
+          Object.keys(W).forEach(n => { W[n].next = null; });
+        }
         closeLayer(e);
         const aid = acc.id;
-        await Store.del('app_' + aid).catch(() => {});
-        for (const mk of Object.keys(S.hist)) await Store.del(hName(mk)).catch(() => {});
+        if (S.mode !== 'server') {
+          await Store.del('app_' + aid).catch(() => {});
+          for (const mk of Object.keys(S.hist)) await Store.del(hName(mk)).catch(() => {});
+        }
         S.accounts = S.accounts.filter(x => x.id !== aid); await saveAccounts();
         try { const l = lastUsers().filter(u => u !== acc.username); localStorage.setItem(LP + 'recent:' + S.scope, JSON.stringify(l)); } catch {}
         await logout(); toast('Hesabın silindi.');
@@ -2064,7 +2182,8 @@ setInterval(() => {
   }
 }, 20000);
 function addMin(hm, n) { const [h, m] = hm.split(':').map(Number); const t = Math.max(0, h * 60 + m + n); return `${pad(Math.floor(t / 60))}:${pad(t % 60)}`; }
-document.addEventListener('visibilitychange', () => { if (!document.hidden && S.me) render(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && S.me) { render(); Sync.poll(); } });
+addEventListener('online', () => Sync.poll());
 
 // ============================================================
 //   BOOT
@@ -2079,12 +2198,33 @@ async function boot() {
     } catch (e) { console.warn(e); }
   }
   if (db && uidv) { S.mode = 'cloud'; S.db = db; S.base = 'data/users/' + uidv; S.scope = uidv; }
+  else if (hasServer()) { S.mode = 'server'; S.scope = 'server'; return bootServer(); }
   else { S.mode = 'local'; S.scope = 'local'; }
   try { await loadAccounts(); }
   catch (e) { console.warn('cloud unavailable, falling back to device', e); S.mode = 'local'; S.scope = 'local'; S.db = null; await loadAccounts(); }
   const sess = readSession();
   const acc = sess && sess.scope === S.scope && S.accounts.find(a => a.id === sess.aid);
   if (acc) { try { await enter(acc); return; } catch (e) { console.error(e); } }
+  auth.tab = S.accounts.length ? 'login' : 'register';
+  renderAuth();
+}
+// The Ritim server (server/) adds <meta name="ritim-server"> to the page it serves. There,
+// accounts and data live on the server and sync across devices. On GitHub Pages the tag
+// is missing, so the app keeps everything on this device.
+const hasServer = () => !!document.querySelector('meta[name="ritim-server"]');
+async function bootServer() {
+  await loadAccounts();
+  try {
+    const { account } = await api('GET', 'me');
+    rememberAcc(account);
+    await enter(account);
+    return;
+  } catch (e) {
+    if (e && e.code === 'unavailable') {
+      $('#app').innerHTML = `<div class="auth"><div class="auth-in"><div class="brand"><div class="mark">Ritim<em>.</em></div><p>Sunucuya ulaşılamadı. İnternet bağlantını kontrol edip tekrar dene.</p></div><button class="btn btn-primary btn-block" data-act="retry-boot">Tekrar dene</button></div></div>`;
+      return;
+    }
+  }
   auth.tab = S.accounts.length ? 'login' : 'register';
   renderAuth();
 }

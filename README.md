@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://yavuzkrm.github.io/ritim/"><strong>Open the app →</strong></a>
-  &nbsp;·&nbsp; Turkish interface &nbsp;·&nbsp; Free, no sign-up server, works offline
+  &nbsp;·&nbsp; Turkish interface &nbsp;·&nbsp; Free, works offline, optional sync server
 </p>
 
 > [!NOTE]
@@ -60,7 +60,8 @@ A normal to-do list wants you to tick a task off and forget it. Taking a pill tw
 - Light and dark themes, six accent colors
 
 **Your data**
-- Local accounts with username and password, plus a one-time recovery code for resetting a forgotten password
+- **Sync between devices** with the optional server: sign in with the same account on your phone and computer and changes show up on both
+- Accounts with username and password, plus a one-time recovery code for resetting a forgotten password
 - JSON backup and restore for moving to a new phone
 - Installable as an app (PWA) and usable offline
 
@@ -77,10 +78,41 @@ Each phone keeps its own data. To move to another device, use **Ayarlar → Yede
 ## How it works
 
 - **One file.** The whole app is [`src/app.html`](src/app.html): HTML, CSS and vanilla JavaScript, with no framework and no runtime dependencies besides Google Fonts.
-- **No server.** On GitHub Pages everything is stored in the browser's `localStorage`. The same file also runs as a [claude.ai](https://claude.ai) artifact, where it uses the artifact's per-user database to sync between devices.
-- **Passwords** are hashed in the browser with PBKDF2-SHA256 (120,000 iterations, random salt per account). This keeps casual users of a shared phone out of each other's lists. It is not server-grade security, because anyone with access to the browser's storage can read the task data itself.
+- **Three places to store data, one app.** All storage goes through a small `Store` layer, so the same file works:
+  - on **GitHub Pages**, with no server: everything stays in the browser's `localStorage`;
+  - with the **Ritim server** in [`server/`](server/): accounts and data live in SQLite and every device signed in to the account stays in sync (see [Sync server](#sync-server));
+  - as a [claude.ai](https://claude.ai) artifact, using the artifact's per-user database.
+- **Passwords.** With the server they are hashed with scrypt on the server and sessions use HTTP-only cookies. On GitHub Pages they are hashed in the browser with PBKDF2-SHA256 (120,000 iterations, random salt per account). That keeps casual users of a shared phone out of each other's lists, but it is not server-grade security, because anyone with access to the browser's storage can read the task data itself.
 - **Offline.** A small service worker caches the app; the page is fetched network-first so updates still arrive.
 - **Build.** [`scripts/build.js`](scripts/build.js) wraps the fragment in a full HTML document and writes `docs/` with the web app manifest, service worker and icons. GitHub Pages serves `docs/` from the `main` branch.
+
+## Sync server
+
+A small Node.js server ([`server/`](server/), Express + better-sqlite3) serves the same `docs/` build and adds an API for accounts and data. The page it serves carries a `<meta name="ritim-server">` tag, which is how the app knows to use the server instead of the browser's storage.
+
+- **Data model.** The app keeps its state in a few JSON documents per person: `app_<id>` for tasks, categories and settings, and `h_<id>_<YYYY-MM>` for each month of history. The server stores them in a `docs` table, scoped to the signed-in user.
+- **Sync.** Every write bumps a per-user revision number. Each device asks for documents changed since the last revision it saw: every 15 seconds while the app is open, and right away when the app comes back to the foreground or the connection returns. If two devices change the same document at the same moment, the later save wins.
+- **Accounts.** Sign-up, sign-in, recovery-code reset, password change and account deletion all go through the API. Resetting or changing the password signs out the other devices. Auth endpoints are rate limited.
+
+### Run it locally
+
+```bash
+npm install
+npm run build        # src/app.html → docs/
+npm start            # http://localhost:3000
+```
+
+The database is created at `data/ritim.db`. Set `DATA_DIR` (or `DB_FILE`) to put it somewhere else and `PORT` to change the port.
+
+### Deploy on Railway
+
+The repo includes a `Dockerfile` and `railway.json`.
+
+1. On [Railway](https://railway.com), create a new project and choose **Deploy from GitHub repo** → `ritim`.
+2. Add a **Volume** to the service, mounted at `/data`. This is where the SQLite database lives. Without a volume, data is lost on every redeploy.
+3. Under **Settings → Networking**, generate a public domain.
+
+Railway sets `PORT` automatically. The health check is `/api/health`.
 
 ## Project structure
 
@@ -88,13 +120,20 @@ Each phone keeps its own data. To move to another device, use **Ayarlar → Yede
 .
 ├── src/
 │   └── app.html            # the entire app (single-file source of truth)
-├── docs/                   # built site served by GitHub Pages (generated)
+├── docs/                   # built site served by GitHub Pages and by the server (generated)
+├── server/
+│   ├── app.js              # Express app: accounts, sessions, document sync API, static files
+│   ├── db.js               # SQLite schema
+│   └── index.js            # entry point
+├── Dockerfile, railway.json
 ├── scripts/
 │   ├── build.js            # src/app.html → docs/ (manifest, service worker, icons)
 │   ├── make-icons.js       # renders the app icons with headless Chrome
 │   └── screenshots.js      # captures the README screenshots
 ├── tests/
+│   ├── api.test.js         # server API tests (node:test)
 │   ├── e2e.js              # end-to-end tests in a phone-sized headless Chrome
+│   ├── sync.js             # two browsers on one account: checks that changes sync
 │   └── browser.js          # finds Chrome and serves docs/ locally
 ├── assets/
 │   ├── icons/              # app icons (pill-organizer motif)
@@ -108,9 +147,10 @@ Each phone keeps its own data. To move to another device, use **Ayarlar → Yede
 Requirements: Node.js 18+ and Google Chrome or Microsoft Edge. Set `CHROME_PATH` if the browser isn't found automatically.
 
 ```bash
-npm install          # installs puppeteer-core (dev only)
+npm install          # server dependencies + puppeteer-core (dev only)
 npm run build        # src/app.html → docs/
-npm test             # 39 end-to-end checks against docs/
+npm test             # 12 API tests, then 39 end-to-end checks against docs/
+npm run test:sync    # 19 checks with two browsers signed in to the same account
 npm run screenshots  # refresh assets/screenshots/
 npm run icons        # re-render assets/icons/
 ```
@@ -119,7 +159,8 @@ The tests sign up, add and complete tasks, check the recurrence rules (last day 
 
 ## Known limitations
 
-- No sync between devices on the GitHub Pages version; use backup and restore.
+- The GitHub Pages version doesn't sync between devices. Use the server version, or backup and restore.
+- Sync needs a connection. With the server version, the app shows a retry screen if it starts offline.
 - Reminders need the app to be open or in the background. There is no push server, so a fully closed app can't notify you.
 - The interface is in Turkish only.
 

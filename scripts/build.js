@@ -89,6 +89,8 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  // Account and sync requests must always reach the server.
+  if (url.pathname.includes('/api/')) return;
   // The page itself: network first so updates arrive, cache when offline.
   if (req.mode === 'navigate') {
     e.respondWith(fetch(req).then(r => {
