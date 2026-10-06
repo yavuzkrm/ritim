@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://yavuzkrm.github.io/ritim/"><strong>Open the app →</strong></a>
+  <a href="https://ritim-production.up.railway.app"><strong>Open the app →</strong></a>
   &nbsp;·&nbsp; Turkish interface &nbsp;·&nbsp; Free, works offline, optional sync server
 </p>
 
@@ -67,7 +67,8 @@ A normal to-do list wants you to tick a task off and forget it. Taking a pill tw
 
 ## Use it on your phone
 
-1. Open **https://yavuzkrm.github.io/ritim/** on the phone.
+1. Open **https://ritim-production.up.railway.app** on the phone. Your account and tasks sync between all devices you sign in on.
+   There is also an on-device version at https://yavuzkrm.github.io/ritim/, which keeps everything in that browser only.
 2. Add it to the home screen:
    - **Android (Chrome):** menu ⋮ → *Add to Home screen* / *Install app*
    - **iPhone (Safari):** Share → *Add to Home Screen*
@@ -87,6 +88,8 @@ Each phone keeps its own data. To move to another device, use **Ayarlar → Yede
 - **Build.** [`scripts/build.js`](scripts/build.js) wraps the fragment in a full HTML document and writes `docs/` with the web app manifest, service worker and icons. GitHub Pages serves `docs/` from the `main` branch.
 
 ## Sync server
+
+Live at **https://ritim-production.up.railway.app**.
 
 A small Node.js server ([`server/`](server/), Express + better-sqlite3) serves the same `docs/` build and adds an API for accounts and data. The page it serves carries a `<meta name="ritim-server">` tag, which is how the app knows to use the server instead of the browser's storage.
 
@@ -179,4 +182,4 @@ If you find a bug, feel free to open an issue. Fixes will most likely be vibe-co
 
 ## License
 
-[MIT](LICENSE) © 2026 Yavuz Kerem Ataç
+This project is licensed under the [MIT License](LICENSE).
