@@ -508,166 +508,71 @@ input[type="date"].inp,input[type="time"].inp{display:block;width:100%}
 
 @media (min-width:640px){ .tiles{grid-template-columns:repeat(4,1fr)} }
 
-/* ---------- vivid look ----------
-   Same layout and flow; more colour. Gradients are derived from the chosen accent, so every
-   accent in Settings stays lively. White text only sits on --grad-hero, which is kept dark
-   enough in both themes; buttons use --grad-btn with --on-accent text. */
+/* ---------- calm look ----------
+   Same layout as the original, with a little colour: solid accent (no gradients, no glow),
+   soft tinted surfaces and muted group colours. Dark theme is a deep navy, like Ninni. */
 :root{
-  --bg:#F6F3FF; --surface:#FFFFFF; --surface-2:#EEE9FB; --line:#DED7F4;
-  --ink:#16122B; --muted:#4A4466; --faint:#736D90;
-  --ok:#4A7C5F; --warn:#7A6D4D; --danger:#8B7A7F; --flame:#8B7D6B;
-  --pop:#7D7D8C; --sun:#8B8B7D; --mint:#7D8B87;
-  --grad-btn:#8B8B9D;
-  --grad-hero:#8B8B9D;
-  --glow:none;
-  --shadow:0 1px 2px rgb(40 20 90 / .06),0 12px 30px -14px rgb(60 30 140 / .26);
+  --bg:#F3F2F8; --surface:#FFFFFF; --surface-2:#E9E8F2; --line:#DCDAE8;
+  --ink:#17162B; --muted:#4E4C66; --faint:#706E88;
+  --shadow:0 1px 2px rgb(23 22 43 / .05),0 8px 24px rgb(23 22 43 / .06);
+  --g-sabah:#C9761F; --g-ogle:#1F86A3; --g-aksam:#8A5CC7; --g-gece:#4F5BC4; --g-gun:#1E8A66;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#110D22; --surface:#1C1736; --surface-2:#29234C; --line:#382F63;
-    --ink:#F3F0FF; --muted:#A8A8B8; --faint:#7D7D8C;
-    --ok:#6B9D8C; --warn:#9D9D8C; --danger:#9D8D9D; --flame:#9D8D7D;
-    --pop:#8D8D9D; --sun:#9D9D8D; --mint:#8D9D9D;
-    --grad-hero:#9D9DAD;
-    --glow:none;
-    --shadow:0 0 0 1px rgb(255 255 255 / .06),0 14px 30px -16px rgb(0 0 0 / .8);
+    --bg:#0E1020; --surface:#171A2E; --surface-2:#20243D; --line:#2A2E4A;
+    --ink:#F1F0FF; --muted:#B4B3CF; --faint:#8A89A8;
+    --shadow:0 1px 2px rgb(0 0 0 / .3),0 10px 30px rgb(0 0 0 / .25);
+    --g-sabah:#E3A35F; --g-ogle:#5DB7CF; --g-aksam:#B394E6; --g-gece:#8D97EC; --g-gun:#5CC59E;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#110D22; --surface:#1C1736; --surface-2:#29234C; --line:#382F63;
-  --ink:#F3F0FF; --muted:#A8A8B8; --faint:#7D7D8C;
-  --ok:#6B9D8C; --warn:#9D9D8C; --danger:#9D8D9D; --flame:#9D8D7D;
-  --pop:#8D8D9D; --sun:#9D9D8D; --mint:#8D9D9D;
-  --grad-hero:#9D9DAD;
-  --glow:none;
-  --shadow:0 0 0 1px rgb(255 255 255 / .06),0 14px 30px -16px rgb(0 0 0 / .8);
+  --bg:#0E1020; --surface:#171A2E; --surface-2:#20243D; --line:#2A2E4A;
+  --ink:#F1F0FF; --muted:#B4B3CF; --faint:#8A89A8;
+  --shadow:0 1px 2px rgb(0 0 0 / .3),0 10px 30px rgb(0 0 0 / .25);
+  --g-sabah:#E3A35F; --g-ogle:#5DB7CF; --g-aksam:#B394E6; --g-gece:#8D97EC; --g-gun:#5CC59E;
 }
-body{background:
-  radial-gradient(42rem 26rem at 105% -6%,rgba(200,200,200,0.02),transparent 62%),
-  radial-gradient(38rem 26rem at -12% 18%,rgba(180,180,180,0.02),transparent 62%),
-  radial-gradient(40rem 26rem at 60% 112%,rgba(200,200,200,0.02),transparent 62%),
-  var(--bg)}
-.dots span{animation-name:fill-v}
-@keyframes fill-v{0%,100%{background:var(--surface-2)}40%{background:var(--pop)}}
-
-/* brand & auth */
-.brand .mark{background:var(--grad-btn);-webkit-background-clip:text;background-clip:text;color:transparent}
-.brand .mark em{color:inherit}
-.pillbox-demo div:nth-child(7n+1) i::after{background:var(--accent)}
-.pillbox-demo div:nth-child(7n+2) i::after{background:var(--pop)}
-.pillbox-demo div:nth-child(7n+3) i::after{background:var(--sun)}
-.pillbox-demo div:nth-child(7n+4) i::after{background:var(--mint)}
-.pillbox-demo div:nth-child(7n+5) i::after{background:color-mix(in oklab,var(--accent) 50%,var(--pop))}
-.pillbox-demo div:nth-child(7n+6) i::after{background:color-mix(in oklab,var(--sun) 50%,var(--pop))}
-.pillbox-demo div:nth-child(7n+7) i::after{background:color-mix(in oklab,var(--mint) 50%,var(--accent))}
-.seg button[aria-pressed="true"]{color:var(--accent)}
-
-/* buttons */
-.btn-primary,.do-btn:not(.on),.fab,.daypick button[aria-pressed="true"]{background:var(--grad-btn);color:var(--on-accent);border-color:transparent;box-shadow:var(--glow)}
-.is-skip .do-btn{background:var(--surface-2);color:var(--muted);box-shadow:none}
-.do-btn.on{background:color-mix(in srgb,var(--ok) 16%,var(--surface));box-shadow:none}
-.switch input:checked+span{background:var(--grad-btn)}
-.link{color:var(--accent)}
 
 /* header */
 .top>div{flex:1;min-width:0}
 .top h1{overflow-wrap:anywhere}
 .top .eyebrow{color:var(--accent)}
-.avatar{box-shadow:0 0 0 3px var(--bg),0 0 0 5.5px color-mix(in srgb,var(--c,var(--accent)) 55%,transparent)}
 
 /* week strip */
 .week-days{border:1px solid var(--line)}
-.wd .lvl{background:color-mix(in srgb,var(--accent) 22%,transparent)}
-.wd.full .lvl{background:linear-gradient(to top,color-mix(in srgb,var(--mint) 45%,transparent),color-mix(in srgb,var(--mint) 20%,transparent))}
-.wd.today{background:color-mix(in srgb,var(--accent) 10%,transparent)}
-.wd[aria-pressed="true"]{background:var(--grad-hero);color:#fff;box-shadow:var(--glow)}
-.wd[aria-pressed="true"] .d,.wd[aria-pressed="true"].today .n,.wd[aria-pressed="true"].today .d{color:#fff}
-.wd[aria-pressed="true"] .lvl{background:rgb(255 255 255 / .22)}
+.wd.today{background:color-mix(in srgb,var(--accent) 9%,transparent)}
+.wd[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
+.wd[aria-pressed="true"] .d,.wd[aria-pressed="true"].today .n,.wd[aria-pressed="true"].today .d{color:var(--on-accent)}
+.wd[aria-pressed="true"] .lvl{background:color-mix(in srgb,var(--on-accent) 18%,transparent)}
 
-/* progress hero: the one big colourful card */
-.hero{background:var(--grad-hero);color:#fff;box-shadow:var(--glow);position:relative;overflow:hidden;isolation:isolate}
-.hero::before,.hero::after{content:"";position:absolute;border-radius:50%;z-index:-1;pointer-events:none}
-.hero::before{width:11rem;height:11rem;right:-3.5rem;top:-4.5rem;background:radial-gradient(circle,rgb(255 255 255 / .22),transparent 70%)}
-.hero::after{width:8rem;height:8rem;left:35%;bottom:-5rem;background:radial-gradient(circle,color-mix(in srgb,var(--sun) 55%,transparent),transparent 70%)}
-.hero h2{color:#fff}
-.hero p{color:rgb(255 255 255 / .9)}
-.hero .ring .bgc{stroke:rgb(255 255 255 / .24)}
-.hero .ring .fgc{stroke:#fff}
-.hero .ring .val,.hero .ring .val small{color:#fff}
-.hero .badge,.hero .badge.flame,.hero .badge.warn,.hero .badge.ok{background:rgb(255 255 255 / .2);color:#fff}
+/* progress card: tinted, not loud */
+.hero{background:color-mix(in srgb,var(--accent) 11%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 22%,var(--line))}
 
-.alert{background:linear-gradient(135deg,color-mix(in srgb,var(--sun) 24%,var(--surface)),color-mix(in srgb,var(--pop) 12%,var(--surface)));border:0;box-shadow:var(--shadow)}
-.alert svg{color:var(--flame)}
+/* time-of-day groups: small tinted icon chips */
+.sec-overdue{--gc:var(--danger)}
+.sec-sabah{--gc:var(--g-sabah)}
+.sec-ogle{--gc:var(--g-ogle)}
+.sec-aksam{--gc:var(--g-aksam)}
+.sec-gece{--gc:var(--g-gece)}
+.sec-gun{--gc:var(--g-gun)}
+.sec-h h3>svg.i{width:1.9rem;height:1.9rem;padding:.38rem;border-radius:.6rem;color:var(--gc,var(--accent));background:color-mix(in srgb,var(--gc,var(--accent)) 16%,transparent)}
 
-.hero{border:0}
-/* time-of-day groups get their own colour */
-.sec-overdue{--gc:linear-gradient(135deg,#E11D48,#F97316)}
-.sec-sabah{--gc:linear-gradient(135deg,#F97316,#F5B700)}
-.sec-ogle{--gc:linear-gradient(135deg,#0EA5E9,#12B5A2)}
-.sec-aksam{--gc:linear-gradient(135deg,#DB2777,#9333EA)}
-.sec-gece{--gc:linear-gradient(135deg,#4F46E5,#1E1B4B)}
-.sec-gun{--gc:linear-gradient(135deg,#10B981,#0EA5E9)}
-.sec-h h3>svg.i{width:2rem;height:2rem;padding:.38rem;border-radius:.65rem;color:#fff;background:var(--gc,var(--grad-btn));box-shadow:0 6px 14px -6px rgb(0 0 0 / .35)}
-
-/* task rows: a colour stripe per category */
+/* task rows: thin category stripe */
 .list{border:1px solid var(--line)}
-.item::after{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c);opacity:.9}
-.item.is-done{background:color-mix(in srgb,var(--ok) 6%,transparent)}
-.is-done .check{background:linear-gradient(135deg,var(--c),color-mix(in oklab,var(--c) 60%,var(--pop)));border-color:transparent;box-shadow:0 6px 14px -6px var(--c)}
-.time{background:color-mix(in srgb,var(--accent) 12%,var(--surface))}
-.is-now .time{background:var(--grad-btn)}
-.is-now::before{background:var(--grad-btn);width:5px;z-index:1}
-.cat-ic{background:linear-gradient(135deg,color-mix(in srgb,var(--c) 22%,transparent),color-mix(in srgb,var(--c) 8%,transparent))}
-.tpl{background:var(--surface);border:2px solid var(--line)}
-.tpl svg{color:var(--pop)}
-.tpl:hover{border-color:var(--accent)}
-.done-toggle{border:1px solid var(--line)}
+.item::after{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c);opacity:.7}
+.is-now::before{width:4px;z-index:1}
 
-/* tab bar */
+/* tab bar, chips, cards */
 .tabbar-in{border-color:var(--line)}
-.tab[aria-current="page"]{color:var(--accent);background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 16%,transparent),color-mix(in srgb,var(--pop) 12%,transparent))}
-.fab{border-radius:1.3rem}
-
-/* calendar */
-.cd .f{background:color-mix(in srgb,var(--accent) 24%,transparent)}
-.cd.full .f{background:linear-gradient(to top,color-mix(in srgb,var(--mint) 55%,transparent),color-mix(in srgb,var(--mint) 25%,transparent))}
-.cd[aria-pressed="true"]{background:var(--grad-hero);color:#fff;box-shadow:var(--glow)}
-.cd[aria-pressed="true"] .f{background:rgb(255 255 255 / .22)}
-.cal-h .icon-btn,.icon-btn{background:color-mix(in srgb,var(--accent) 12%,var(--surface))}
-
-/* tasks view: filter chips wrap instead of scrolling sideways */
 .chips{flex-wrap:wrap;overflow:visible;margin:0;padding:2px 0 .2rem}
 .chip{border-color:var(--line)}
-.chip[aria-pressed="true"]{background:var(--grad-hero);color:#fff;border-color:transparent;box-shadow:var(--glow)}
-.chip[aria-pressed="true"] i{background:#fff}
-.search .inp{border:1px solid var(--line)}
-
-/* stats */
-.tile{position:relative;overflow:hidden;border:1px solid var(--line);background:linear-gradient(160deg,color-mix(in srgb,var(--t,var(--accent)) 17%,var(--surface)),var(--surface) 72%)}
-.tile:nth-child(4n+1){--t:var(--accent)}
-.tile:nth-child(4n+2){--t:var(--pop)}
-.tile:nth-child(4n+3){--t:var(--sun)}
-.tile:nth-child(4n+4){--t:var(--mint)}
-.tile .v{color:color-mix(in oklab,var(--t,var(--accent)) 62%,var(--ink))}
-.panel{border:1px solid var(--line)}
-.bar i{background:linear-gradient(to top,var(--accent),color-mix(in oklab,var(--accent) 40%,var(--pop)))}
-.bar.today i{background:linear-gradient(to top,var(--flame),var(--sun))}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:transparent}
+.chip[aria-pressed="true"] i{background:var(--on-accent)}
+.cd[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
+.cd[aria-pressed="true"] .f{background:color-mix(in srgb,var(--on-accent) 18%,transparent)}
 .heat{overflow:hidden}
 .heat i{min-width:0}
-.heat i.l4{background:var(--grad-btn)}
-.rate-bar i{background:linear-gradient(90deg,var(--c,var(--accent)),color-mix(in oklab,var(--c,var(--accent)) 55%,var(--pop)))}
-
-/* sheets, editor, settings */
-.sheet{background:linear-gradient(to bottom,color-mix(in srgb,var(--accent) 7%,var(--bg)),var(--bg) 10rem)}
-.sheet-f{background:var(--bg)}
-.summary{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 13%,transparent),color-mix(in srgb,var(--pop) 10%,transparent))}
-.opt[aria-pressed="true"]{background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 12%,transparent),color-mix(in srgb,var(--pop) 6%,transparent))}
-.box,.opts,.more-toggle,.prio-pick button,.d-stat,.act,.card{border:1px solid var(--line)}
+.tile,.panel,.box,.opts,.more-toggle,.prio-pick button,.d-stat,.act,.card,.done-toggle,.search .inp{border:1px solid var(--line)}
 .prio-pick button[aria-pressed="true"],.prio-pick .yes[aria-pressed="true"]{border-width:2.5px}
-.d-stat .v{color:var(--accent)}
-.prof{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 14%,var(--surface)),color-mix(in srgb,var(--pop) 9%,var(--surface)))}
-.set-btn svg:first-child{color:var(--accent)}
-.set-btn.danger svg:first-child{color:var(--danger)}
 
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
