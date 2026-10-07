@@ -57,7 +57,9 @@ A normal to-do list wants you to tick a task off and forget it. Taking a pill tw
 **Comfort and accessibility**
 - Text size setting (Normal / Large / Extra large) that scales the whole interface
 - Large touch targets, high-contrast colors, labelled buttons
+- A colourful look: a gradient progress card, a colour for each time of day, a colour stripe per category and colourful progress tiles. Every gradient follows the accent you pick
 - Light and dark themes, six accent colors
+- Nothing scrolls sideways on any screen size, from small phones to large monitors
 
 **Your data**
 - **Sync between devices** with the optional server: sign in with the same account on your phone and computer and changes show up on both
@@ -177,6 +179,7 @@ Ritim was built in one long conversation with Claude Code. The process, roughly:
 4. Because older people will use it, the next pass made the text larger, raised the contrast, added a text-size setting and turned the editor into plain-language choices.
 5. Feedback from real use followed: an explicit "Done" button instead of an empty circle, clearer "important" marking, an "is this important?" question when adding a task, and a fix for scrolling on small screens.
 6. Finally it was packaged for free hosting on GitHub Pages, with offline support, icons and this README.
+7. Later, the look felt too plain, so the colours were livened up without touching the layout: gradients that follow the chosen accent, a colour per time of day and per category, and colourful progress tiles. A layout check at ten screen widths, from 320 px phones to 1920 px monitors, also found two places that could scroll sideways (a long name in the header and the filter chips on the task list). Both were fixed.
 
 If you find a bug, feel free to open an issue. Fixes will most likely be vibe-coded too.
 
