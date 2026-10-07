@@ -517,9 +517,9 @@ input[type="date"].inp,input[type="time"].inp{display:block;width:100%}
   --ink:#16122B; --muted:#4A4466; --faint:#736D90;
   --ok:#0B8457; --warn:#A35A00; --danger:#D2334E; --flame:#E2560A;
   --pop:#FF3D8B; --sun:#FF9F1C; --mint:#12B5A2;
-  --grad-btn:linear-gradient(135deg,var(--accent),color-mix(in oklab,var(--accent) 45%,var(--pop)));
-  --grad-hero:linear-gradient(135deg,var(--accent) 0%,color-mix(in oklab,var(--accent) 50%,#B0249A) 55%,color-mix(in oklab,var(--accent) 25%,#C8205F) 100%);
-  --glow:0 14px 30px -12px color-mix(in srgb,var(--accent) 35%,transparent);
+  --grad-btn:linear-gradient(135deg,color-mix(in oklab,var(--accent) 70%,#ffffff),color-mix(in oklab,var(--accent) 55%,var(--pop)));
+  --grad-hero:linear-gradient(135deg,color-mix(in oklab,var(--accent) 75%,#ffffff),color-mix(in oklab,var(--accent) 65%,#B0249A) 55%,color-mix(in oklab,var(--accent) 55%,#C8205F) 100%);
+  --glow:0 8px 16px -8px color-mix(in srgb,var(--accent) 25%,transparent);
   --shadow:0 1px 2px rgb(40 20 90 / .06),0 12px 30px -14px rgb(60 30 140 / .26);
 }
 @media (prefers-color-scheme: dark){
@@ -528,8 +528,8 @@ input[type="date"].inp,input[type="time"].inp{display:block;width:100%}
     --ink:#F3F0FF; --muted:#C3BCE8; --faint:#8F88B8;
     --ok:#4FD69C; --warn:#FFB54D; --danger:#FF7A8E; --flame:#FF9A52;
     --pop:#FF6FA8; --sun:#FFB347; --mint:#3FE0C8;
-    --grad-hero:linear-gradient(135deg,color-mix(in oklab,var(--accent) 62%,#1E0C6E),color-mix(in oklab,var(--pop) 62%,#5A0838));
-    --glow:0 14px 32px -14px color-mix(in srgb,var(--accent) 35%,transparent);
+    --grad-hero:linear-gradient(135deg,color-mix(in oklab,var(--accent) 55%,#1E0C6E),color-mix(in oklab,var(--pop) 45%,#5A0838));
+    --glow:0 8px 16px -8px color-mix(in srgb,var(--accent) 20%,transparent);
     --shadow:0 0 0 1px rgb(255 255 255 / .06),0 14px 30px -16px rgb(0 0 0 / .8);
   }
 }
@@ -538,14 +538,14 @@ input[type="date"].inp,input[type="time"].inp{display:block;width:100%}
   --ink:#F3F0FF; --muted:#C3BCE8; --faint:#8F88B8;
   --ok:#4FD69C; --warn:#FFB54D; --danger:#FF7A8E; --flame:#FF9A52;
   --pop:#FF6FA8; --sun:#FFB347; --mint:#3FE0C8;
-  --grad-hero:linear-gradient(135deg,color-mix(in oklab,var(--accent) 62%,#1E0C6E),color-mix(in oklab,var(--pop) 62%,#5A0838));
-  --glow:0 14px 32px -14px color-mix(in srgb,var(--accent) 35%,transparent);
+  --grad-hero:linear-gradient(135deg,color-mix(in oklab,var(--accent) 55%,#1E0C6E),color-mix(in oklab,var(--pop) 45%,#5A0838));
+  --glow:0 8px 16px -8px color-mix(in srgb,var(--accent) 20%,transparent);
   --shadow:0 0 0 1px rgb(255 255 255 / .06),0 14px 30px -16px rgb(0 0 0 / .8);
 }
 body{background:
-  radial-gradient(42rem 26rem at 105% -6%,color-mix(in srgb,var(--pop) 13%,transparent),transparent 62%),
-  radial-gradient(38rem 26rem at -12% 18%,color-mix(in srgb,var(--accent) 14%,transparent),transparent 62%),
-  radial-gradient(40rem 26rem at 60% 112%,color-mix(in srgb,var(--sun) 11%,transparent),transparent 62%),
+  radial-gradient(42rem 26rem at 105% -6%,color-mix(in srgb,var(--pop) 8%,transparent),transparent 62%),
+  radial-gradient(38rem 26rem at -12% 18%,color-mix(in srgb,var(--accent) 9%,transparent),transparent 62%),
+  radial-gradient(40rem 26rem at 60% 112%,color-mix(in srgb,var(--sun) 7%,transparent),transparent 62%),
   var(--bg)}
 .dots span{animation-name:fill-v}
 @keyframes fill-v{0%,100%{background:var(--surface-2)}40%{background:var(--pop)}}
